@@ -31,14 +31,13 @@ let tr_function (fdef : Lang.Imp.function_def) =
   (* Translate ---------------------------------------------------------------*)
 
   let rec tr_expression exp reg dest =
-    let id_node = new_node () in
-    let node, entry = match exp with
-    | Cst  n -> IOp ((OConst n),                    [], reg, dest), id_node
-    | Bool b -> IOp ((OConst (if b then 1 else 0)), [], reg, dest), id_node
+    match exp with
+    | Cst  n -> push_node (IOp ((OConst n), [], reg, dest))
+    | Bool b -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
     | Var  v ->
       (match Hashtbl.find_opt env v with
-      | Some rv -> IMove (reg, rv, dest), id_node
-      | None    -> ILoad (AddrGlobl v, reg, dest), id_node)
+      | Some rv -> push_node (IMove (reg, rv, dest))
+      | None    -> push_node (ILoad (AddrGlobl v, reg, dest)))
     | Binop (op, e1, e2) -> tr_binop op e1 e2 reg dest
     | Call (s, le) ->
       let id_call = new_node () in
@@ -48,10 +47,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
           let id_node = tr_expression exp reg dest in
           (reg :: lr, id_node)) le ([], id_call)
       in
-      ICall (s, args, dest), entry;
-    in
-    Hashtbl.add code id_node node;
-    entry 
+      Hashtbl.add code id_call (ICall (s, args, dest));
+      entry
   and tr_binop (op : binop) e1 e2 reg dest =
     let op =
       match op with
@@ -59,10 +56,9 @@ let tr_function (fdef : Lang.Imp.function_def) =
       | Lt  -> OLt
     in
     let r2 = new_reg () in
-    let id_node = new_node () in
-    let n2 = tr_expression e2 r2 id_node in
-    let n1 = tr_expression e1 dest n2 in
-    IOp (op, [dest; r2], reg, dest), n1
+    let id_op = push_node (IOp (op, [dest; r2], reg, dest)) in
+    let n2 = tr_expression e2 r2 id_op in
+    tr_expression e1 dest n2
   in
 
   let tr_condition (cond : Lang.Imp.expression) destT destF =
