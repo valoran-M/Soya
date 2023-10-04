@@ -122,3 +122,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
     entry = entry;
   }
 
+let tr_program (prog : Lang.Imp.program) =
+  {
+    globals = prog.globals;
+    functions = List.map (fun f -> tr_function f) prog.functions;
+  }

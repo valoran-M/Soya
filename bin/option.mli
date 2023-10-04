@@ -1,0 +1,12 @@
+val input_file  : string ref
+val output_file : string option ref
+ 
+type lang_compile =
+  | Imp
+val lang_compile : lang_compile ref
+
+val debug_imp : bool ref
+val debug_rtl : bool ref
+
+val parse_args : unit -> unit
+

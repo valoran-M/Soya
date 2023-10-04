@@ -1,2 +1,12 @@
+(ocamllex
+ (modules implexer))
+
+(menhir
+ (modules impparser)
+ (flags --explain --dump)
+ (infer true))
+
+
 (library 
+  (libraries lang)
   (name lex))
