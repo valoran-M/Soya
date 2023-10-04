@@ -76,4 +76,4 @@ let print_rtl (prog : Rtl.program) file ext =
   let outf = formatter_of_out_channel out in
   print_global outf prog.globals;
   print_prog outf prog.functions
-  
+
