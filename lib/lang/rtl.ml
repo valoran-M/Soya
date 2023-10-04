@@ -6,7 +6,7 @@ type ident = string
 type address =
   | Addr      of ident
   | AddrStack of int
-  | AddrGlobl of ident * int
+  | AddrGlobl of ident
 
 type operation =
   | OConst of int
@@ -20,15 +20,15 @@ type condition =
   | CLt
 
 type instruction =
-  | INop
-  | IPutchar of reg
+  | INop     of node
+  | IPutchar of reg * node
   | IMove    of reg * reg * node
   | IOp      of operation * reg list * reg * node
   | ILoad    of address * reg * node
   | IStore   of address * reg * node
   | ICall    of ident * reg list * node
   | ICond    of condition * reg list * node * node
-  | IReturn  of reg
+  | IReturn  of reg option
   | IGoto    of node
 
 type code = (node, instruction) Hashtbl.t

@@ -2,15 +2,13 @@ var retour;
 var espace;
 
 function main(arg) {
-  var j;
   var i;
-  j = 5;
   i = 0;
   retour = 10;
   espace = 32;
 
-  while (i < j+1) {
-    affiche_ligne(i, j);
+  while (i < arg+1) {
+    affiche_ligne(i, arg);
     putchar(retour);
     i = i + 1;
   }

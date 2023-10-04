@@ -22,7 +22,13 @@ let tr_function (fdef : Lang.Imp.function_def) =
   in
   List.iter (fun a -> Hashtbl.add env a (new_reg ())) fdef.locals;
 
-(* Traduction ----------------------------------------------------------------*)
+  let push_node node =
+    let id = new_node () in
+    Hashtbl.add code id node;
+    id
+  in
+
+  (* Translate ---------------------------------------------------------------*)
 
   let rec tr_expression exp reg dest =
     let id_node = new_node () in
@@ -32,7 +38,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Var  v ->
       (match Hashtbl.find_opt env v with
       | Some rv -> IMove (reg, rv, dest), id_node
-      | None -> ILoad (Addr v, reg, dest), id_node)
+      | None    -> ILoad (AddrGlobl v, reg, dest), id_node)
     | Binop (op, e1, e2) -> tr_binop op e1 e2 reg dest
     | Call (s, le) ->
       let id_call = new_node () in
@@ -60,66 +66,60 @@ let tr_function (fdef : Lang.Imp.function_def) =
   in
 
   let tr_condition (cond : Lang.Imp.expression) destT destF =
-    let id_cond = new_node () in
     match cond with
     | Binop (Lt, e1, e2) ->
       let r1 = new_reg () in
       let r2 = new_reg () in
+      let id_cond = push_node (ICond(CLt, [r1; r2], destT, destF)) in
       let id2 = tr_expression e2 r2 id_cond in
-      let id1 = tr_expression e1 r1 id2 in
-      ICond (CLt, [r1; r2], destT, destF), id1
+      tr_expression e1 r1 id2
     | _ ->
       let r = new_reg () in
-      let id = tr_expression cond r id_cond in
-      ICond (CEqi 1, [r], destT, destF), id
+      let id_node = push_node (ICond (CEqi 1, [r], destT, destF)) in
+      tr_expression cond r id_node
   in
 
   let rec tr_instruction (inst : Lang.Imp.instruction) dest =
-    let id_node = new_node () in
-    let node, entry =
-      match inst with
-      | Putchar e ->
-        let reg = new_reg () in
-        let n   = tr_expression e reg id_node in
-        IPutchar reg, n
-      | Set (id, e) ->
-          (match Hashtbl.find_opt env id with
-          | Some reg -> INop, tr_expression e reg id_node
-          | None ->
-            let reg = new_reg () in 
-            IStore (Addr id, reg, id_node), tr_expression e reg id_node)
-      | If (c, e1, e2) ->
-        let node_T = tr_sequence e1 dest in
-        let node_F = tr_sequence e2 dest in
-        tr_condition c node_T node_F
-      | While (c, e) ->
-        let goto_id = new_node () in
-        let node_T  = tr_sequence e id_node in
-        let cond, cond_id = tr_condition c node_T dest in
-        Hashtbl.add code cond_id cond;
-        IGoto cond_id, goto_id
-      | Return e ->
-        let reg = new_reg () in
-        let n   = tr_expression e reg id_node in
-        IReturn reg, n
-      | Expr e ->
-        let reg = new_reg () in
-        INop, tr_expression e reg dest
-    in
-    Hashtbl.add code id_node node;
-    entry
+    match inst with
+    | Putchar e ->
+      let reg = new_reg () in
+      let id_put = push_node (IPutchar (reg, dest)) in
+      tr_expression e reg id_put
+    | Set (id, e) ->
+        (match Hashtbl.find_opt env id with
+        | Some reg -> tr_expression e reg dest
+        | None ->
+          let reg = new_reg () in
+          let id_store = push_node (IStore ((AddrGlobl id), reg, dest)) in
+          tr_expression e reg id_store)
+    | If (c, e1, e2) ->
+      let node_T = tr_sequence e1 dest in
+      let node_F = tr_sequence e2 dest in
+      tr_condition c node_T node_F
+    | While (c, e) ->
+      let id_goto = new_node () in
+      let node_T  = tr_sequence e id_goto in
+      let id_cond = tr_condition c node_T dest in
+      Hashtbl.add code id_goto (IGoto id_cond);
+      id_cond
+    | Return e ->
+      let reg = new_reg () in
+      tr_expression e reg (push_node (IReturn (Some reg)))
+    | Expr e ->
+      let reg = new_reg () in
+      tr_expression e reg dest
   and tr_sequence seq entry =
     List.fold_right (fun inst entry ->
       tr_instruction inst entry
     ) seq entry
   in
 
-  let entry = tr_sequence fdef.code (new_node ()) in
+  let entry = tr_sequence fdef.code (push_node (IReturn None)) in
   {
     name = fdef.name;
-    params = params;
-    code = code;
-    entry = entry;
+    params;
+    code;
+    entry;
   }
 
 let tr_program (prog : Lang.Imp.program) =
@@ -127,3 +127,4 @@ let tr_program (prog : Lang.Imp.program) =
     globals = prog.globals;
     functions = List.map (fun f -> tr_function f) prog.functions;
   }
+
