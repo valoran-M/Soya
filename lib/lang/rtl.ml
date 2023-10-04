@@ -15,11 +15,14 @@ type operation =
 
 type condition =
   | CImm of int
+  | CEqi of int | CNeqi of int
+  | CEq | CNeq
   | CLt
 
 type instruction =
   | INop
   | IPutchar of reg
+  | IMove    of reg * reg * node
   | IOp      of operation * reg list * reg * node
   | ILoad    of address * reg * node
   | IStore   of address * reg * node
