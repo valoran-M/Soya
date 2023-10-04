@@ -59,8 +59,8 @@ let print_function ppf (f : Rtl.function_def) =
       fprintf ppf "goto %d\n" n
     in
   let ret_f =
-    List.rev (List.sort (fun (id1, _) (id2, _) -> Int.compare id1 id2)
-    (List.of_seq (Hashtbl.to_seq f.code)))
+    List.sort (fun (id1, _) (id2, _) -> Int.compare id2 id1)
+      (List.of_seq (Hashtbl.to_seq f.code))
   in
   fprintf ppf "%s(%a) {\n" f.name print_arg f.params;
   print_trans ppf f.entry (match ret_f with (id1, _) :: _ -> (id1 - 1) | _ -> -1);
