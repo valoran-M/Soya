@@ -1,0 +1,31 @@
+var retour;
+var espace;
+
+function main(arg) {
+  var j;
+  var i;
+  j = 5;
+  i = 0;
+  retour = 10;
+  espace = 32;
+
+  while (i < j+1) {
+    affiche_ligne(i, j);
+    putchar(retour);
+    i = i + 1;
+  }
+}
+
+function affiche_ligne(i, n) {
+  var j;
+  j = 0;
+  while (j < n+1) {
+    if (i*i + j*j < n*n) {
+      putchar(46);
+    } else {
+      putchar(35);
+    }
+    putchar(espace);
+    j = j+1;
+  }
+}

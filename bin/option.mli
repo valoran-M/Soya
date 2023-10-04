@@ -1,5 +1,5 @@
 val input_file  : string ref
-val output_file : string option ref
+val output_file : string ref
  
 type lang_compile =
   | Imp

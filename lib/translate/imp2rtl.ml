@@ -17,7 +17,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
   let params =
     List.map (fun a ->
       let r = new_reg () in
-      Hashtbl.add env a (new_reg ()); r)
+      Hashtbl.add env a r; r)
       fdef.params
   in
   List.iter (fun a -> Hashtbl.add env a (new_reg ())) fdef.locals;

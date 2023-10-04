@@ -1,9 +1,10 @@
 let imp_to_rtl imp =
   let rtl = Translate.Imp2rtl.tr_program imp in
-  if !Option.debug_rtl then ();
+  if !Option.debug_rtl
+  then Debug.PrintRTL.print_rtl rtl !Option.output_file ".rtl";
   rtl
 
-let main () =
+let () =
   Option.parse_args ();
   let c = open_in !Option.input_file in
   let lb = Lexing.from_channel c in
@@ -16,4 +17,3 @@ let main () =
   in
   ()
 
-let () = main ()

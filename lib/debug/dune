@@ -1,0 +1,3 @@
+(library 
+  (libraries lang)
+  (name debug))
