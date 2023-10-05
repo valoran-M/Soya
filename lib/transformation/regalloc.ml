@@ -19,11 +19,13 @@ let get_liveness (rtl_fun : function_def) =
   let reg = Printf.sprintf "x%d" in
 
   let fun_args_to_reg =
-    let rec aux acc reg args =
-      match args, reg with
-      | _, [] | [], _ -> acc
-      | _ :: args, r :: reg  -> aux (r :: acc) reg args
-    in aux [] [a0; a1; a2; a3]
+    let rec aux acc regs args =
+      match regs, args with
+      | _,         []        -> acc
+      | [],        a :: args -> aux ((reg a :: acc)) [] args
+      | r :: reg,  _ :: args -> aux (r :: acc) reg args
+    in
+    aux [] [a0; a1; a2; a3]
   in
 
   let rec instruction_get_use id =
