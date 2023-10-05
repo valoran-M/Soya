@@ -1,5 +1,8 @@
 type node  = int
-type reg   = int
+
+type reg =
+  | Real   of Mips.register
+  | Pseudo of int
 
 type ident = string
 

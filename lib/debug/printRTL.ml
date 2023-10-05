@@ -2,7 +2,9 @@ open Format
 open Lang
 
 let print_reg ppf (reg : Rtl.reg) =
-  fprintf ppf "x%d" reg
+  match reg with
+  | Pseudo r -> fprintf ppf "x%d" r
+  | Real s   -> fprintf ppf "%s" s
 
 let print_global ppf globals =
   let rec aux ppf globals =
@@ -33,7 +35,7 @@ let print_function ppf (f : Rtl.function_def) =
       fprintf ppf "putchar %a\n" print_reg reg;
       print_trans ppf id next
     | Rtl.IMove (r1, r2, n) ->
-      fprintf ppf "move %a %a\n" print_reg r1 print_reg r2;
+      fprintf ppf "%a <- %a\n" print_reg r1 print_reg r2;
       print_trans ppf id n
     | Rtl.IOp (op, args, rd, n) ->
       fprintf ppf "%a = %a\n" print_reg rd

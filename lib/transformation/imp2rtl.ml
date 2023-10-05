@@ -1,5 +1,6 @@
 open Lang.Imp
 open Lang.Rtl
+open Lang.Mips
 
 let tr_function (fdef : Lang.Imp.function_def) =
   (* RTL code *)
@@ -10,27 +11,27 @@ let tr_function (fdef : Lang.Imp.function_def) =
   let new_reg, new_node =
     let reg  = ref (-1) in
     let node = ref (-1) in
-    (fun () -> incr reg;  !reg ), (fun () -> incr node; !node)
+    (fun () -> incr reg;  Pseudo !reg ), (fun () -> incr node; !node)
   in
 
   (* Save params and local variable in environement *)
-  let params =
+  let _ =
     List.map (fun a ->
       let r = new_reg () in
-      Hashtbl.add env a r; r)
+      Hashtbl.replace env a r; r)
       fdef.params
   in
-  List.iter (fun a -> Hashtbl.add env a (new_reg ())) fdef.locals;
+  List.iter (fun a -> Hashtbl.replace env a (new_reg ())) fdef.locals;
 
   let push_node node =
     let id = new_node () in
-    Hashtbl.add code id node;
+    Hashtbl.replace code id node;
     id
   in
 
   (* Translate ---------------------------------------------------------------*)
 
-  let rec tr_expression exp reg dest =
+  let rec tr_expression exp (reg : reg) dest =
     match exp with
     | Cst  n -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
@@ -41,13 +42,16 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Binop (op, e1, e2) -> tr_binop op e1 e2 reg dest
     | Call (s, le) ->
       let id_call = new_node () in
-      let args, entry =
-        List.fold_right (fun exp (lr, dest) -> 
-          let reg = new_reg () in
+      let args, entry, _ =
+        List.fold_right (fun exp (lr, dest, nb_arg) -> 
+          let reg = if nb_arg < 4
+                    then Real (Utils.nb_args_to_reg nb_arg)
+                    else new_reg () in
           let id_node = tr_expression exp reg dest in
-          (reg :: lr, id_node)) le ([], id_call)
+          (reg :: lr, id_node, nb_arg - 1))
+        le ([], id_call, List.length le - 1)
       in
-      Hashtbl.add code id_call (ICall (s, args, dest));
+      Hashtbl.replace code id_call (ICall (s, args, dest));
       entry
   and tr_binop (op : binop) e1 e2 reg dest =
     let op =
@@ -56,9 +60,9 @@ let tr_function (fdef : Lang.Imp.function_def) =
       | Lt  -> OLt
     in
     let r2 = new_reg () in
-    let id_op = push_node (IOp (op, [dest; r2], reg, dest)) in
+    let id_op = push_node (IOp (op, [reg; r2], reg, dest)) in
     let n2 = tr_expression e2 r2 id_op in
-    tr_expression e1 dest n2
+    tr_expression e1 reg n2
   in
 
   let tr_condition (cond : Lang.Imp.expression) destT destF =
@@ -96,7 +100,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let id_goto = new_node () in
       let node_T  = tr_sequence e id_goto in
       let id_cond = tr_condition c node_T dest in
-      Hashtbl.add code id_goto (IGoto id_cond);
+      Hashtbl.replace code id_goto (IGoto id_cond);
       id_cond
     | Return e ->
       let reg = new_reg () in
@@ -111,6 +115,17 @@ let tr_function (fdef : Lang.Imp.function_def) =
   in
 
   let entry = tr_sequence fdef.code (push_node (IReturn None)) in
+  let params, entry =
+    let rec aux (na, e) regs (args : label list) =
+      match regs, args with
+      | _, [] -> (na, e)
+      | [], a :: args -> aux (Hashtbl.find env a :: na, e) [] args
+      | r :: reg,  a :: args ->
+        let new_entry = push_node (IMove (Hashtbl.find env a, r, e)) in
+        aux (r :: na, new_entry) reg args
+    in
+    aux ([], entry) [Real a0; Real a1; Real a2; Real a3] fdef.params
+  in
   {
     name = fdef.name;
     params;
