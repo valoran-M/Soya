@@ -8,7 +8,7 @@ let register =
    s0; s1; s2; s3; s4; s5; s6; s7]
 
 let caller_saved = [t0; t1; t2; t3; t4; t5; t6; t7; t8; t9]
-let callee_saved  = [s0; s1; s2; s3; s4; s5; s6; s7]
+let callee_saved = [s0; s1; s2; s3; s4; s5; s6; s7]
 
 let get_liveness (rtl_fun : function_def) =
   let def_use = Hashtbl.create 32 in
@@ -59,5 +59,4 @@ let get_liveness (rtl_fun : function_def) =
   in
   instruction_get_use rtl_fun.entry;
   def_use
-
 
