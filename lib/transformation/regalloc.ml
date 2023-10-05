@@ -21,8 +21,7 @@ let get_liveness (rtl_fun : function_def) =
   let fun_args_to_reg =
     let rec aux acc reg args =
       match args, reg with
-      | _, [] -> acc
-      | [], _ -> acc
+      | _, [] | [], _ -> acc
       | _ :: args, r :: reg  -> aux (r :: acc) reg args
     in aux [] [a0; a1; a2; a3]
   in
