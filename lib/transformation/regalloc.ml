@@ -27,7 +27,7 @@ let get_liveness (rtl_fun : function_def) =
   in
 
   let rec instruction_get_use id =
-    if Hashtbl.mem def_use id then
+    if not (Hashtbl.mem def_use id) then
       match Hashtbl.find rtl_fun.code id with
       | INop n -> instruction_get_use n
       | IPutchar (r, n) ->
