@@ -2,6 +2,22 @@ open Lang.Imp
 open Lang.Rtl
 open Lang.Mips
 
+let fun_args_to_reg reg =
+  let rec aux acc regs args =
+    match regs, args with
+    | _,         []        -> acc
+    | [],        a :: args -> aux ((reg a :: acc)) [] args
+    | r :: reg,  _ :: args -> aux (r :: acc) reg args
+  in
+  aux [] [a0; a1; a2; a3]
+
+let nb_args_to_reg nb =
+  match nb with
+  | 0 -> a0 | 1 -> a1
+  | 2 -> a2 | 3 -> a3
+  | _ -> assert false
+
+
 let tr_function (fdef : Lang.Imp.function_def) =
   (* RTL code *)
   let code = Hashtbl.create 16 in
@@ -45,8 +61,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let args, entry, _ =
         List.fold_right (fun exp (lr, dest, nb_arg) -> 
           let reg = if nb_arg < 4
-                    then Real (Utils.nb_args_to_reg nb_arg)
-                    else new_reg () in
+                    then Real (nb_args_to_reg nb_arg)
+                    else assert false (* new_reg () *) in
           let id_node = tr_expression exp reg dest in
           (reg :: lr, id_node, nb_arg - 1))
         le ([], id_call, List.length le - 1)

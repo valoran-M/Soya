@@ -1,20 +1,41 @@
+open Utils
 open Lang.Rtl
 open Lang.Mips
 
-module Reg_set = Set.Make(String)
+module Reg_set = Set.Make(
+  struct 
+    type t = reg
+    let compare t1 t2 =
+      match (t1, t2) with
+      | Real r1,   Real r2   -> String.compare r1 r2
+      | Pseudo r1, Pseudo r2 -> Int.compare r1 r2
+      | Pseudo _,  Real _    -> -1
+      | Real _,    Pseudo _  ->  1
 
-let reg = function
-  | Pseudo n -> Printf.sprintf "x%d" n
-  | Real r   -> r
+  end
+)
 
-(* Liveness ----------------------------------------------------------------- *)
+let fun_args_to_reg =
+  let rec aux acc regs args =
+    match regs, args with
+    | _,         []        -> acc
+    | [],        a :: args -> aux (a :: acc) [] args
+    | r :: reg,  _ :: args -> aux (r :: acc) reg args
+  in
+  aux [] [Real a0; Real a1; Real a2; Real a3]
+
+let caller_saved = List.map (fun r -> Real r)
+  [t0; t1; t2; t3; t4; t5; t6; t7; t8; t9]
+let callee_saved = List.map (fun r -> Real r)
+  [s0; s1; s2; s3; s4; s5; s6; s7]
 
 let register =
-  [t0; t1; t2; t3; t4; t5; t6; t7; t8; t9;
-   s0; s1; s2; s3; s4; s5; s6; s7]
+  [|t0; t1; t2; t3; t4; t5; t6; t7; t8; t9;
+  s0; s1; s2; s3; s4; s5; s6; s7|]
 
-let caller_saved = [t0; t1; t2; t3; t4; t5; t6; t7; t8; t9]
-let callee_saved = [s0; s1; s2; s3; s4; s5; s6; s7]
+let k = Array.length register
+
+(* Liveness ----------------------------------------------------------------- *)
 
 let get_liveness (rtl_fun : function_def) =
   (* Def and Use array *)
@@ -45,36 +66,37 @@ let get_liveness (rtl_fun : function_def) =
       | INop n -> add_succ id n; init id n
       | IPutchar (r, n) ->
         add_succ id n;
-        add_def_use id [] [reg r];
+        add_def_use id [] [r];
         init id n
       | IMove (rd, r, n) ->
         add_succ id n;
-        add_def_use id [reg rd] [reg r];
+        add_def_use id [rd] [r];
         init id n
       | IOp (_, args, rd, n) ->
         add_succ id n;
-        add_def_use id [reg rd] (List.map reg args);
+        add_def_use id [rd] (args);
         init id n
       | ILoad (_, rd, n) ->
         add_succ id n;
-        add_def_use id [reg rd] [];
+        add_def_use id [rd] [];
         init id n
       | IStore (_, r, n) ->
         add_succ id n;
-        add_def_use id [] [reg r];
+        add_def_use id [] [r];
         init id n
       | ICall (_, args, n) ->
         add_succ id n;
-        add_def_use id caller_saved (Utils.fun_args_to_reg reg args);
+        add_def_use id caller_saved (fun_args_to_reg args);
         init id n
       | ICond (_, args, nt, nf) ->
         add_succ id nt; add_succ id nf;
-        add_def_use id [] (List.map reg args);
+        add_def_use id [] args;
         init id nt;
         init id nf
       | IReturn (Some _) ->
-        add_def_use id [] (v0 :: callee_saved)
-      | IReturn None -> ()
+        add_def_use id [] [Real v0]
+      | IReturn None ->
+        add_def_use id [] []
       | IGoto n ->
         add_succ id n;
         init id n)
@@ -119,31 +141,62 @@ let get_liveness (rtl_fun : function_def) =
 
 (* Interference Graph ------------------------------------------------------- *)
 
-type vertex = Preference | Interfere
-
-let create_interference (f : function_def) =
-  let graph = Hashtbl.create 16 in
-
-  let add id1 id2 ver =
-    let id1, id2 = if String.compare id2 id1 < 0 then id2, id1 else id1, id2 in
-    match Hashtbl.find_opt graph (id1, id2), ver with
-    | Some Interfere, Preference -> ()
-    | _ -> Hashtbl.replace graph (id1, id2) ver
-  in
+let interference_graph (f : function_def) =
+  let graph = Inter_graph.create () in
 
   let def_use, in_out = get_liveness f in
 
   Hashtbl.iter (fun id (defs, _) ->
     let out = match Hashtbl.find f.code id with
       | IMove (rd, w, _) ->
-        add (reg rd) (reg w) Preference;
-        Reg_set.remove (reg w) (snd (Hashtbl.find in_out id))
+        Inter_graph.add rd w Inter_graph.Preference graph;
+        Reg_set.remove w (snd (Hashtbl.find in_out id))
       | _ -> snd (Hashtbl.find in_out id)
     in
     let out = Reg_set.diff out defs in
     Reg_set.iter (fun def ->
-      Reg_set.iter (fun o -> add def o Interfere) out
+      Reg_set.iter (fun o -> Inter_graph.add def o Interfere graph) out
     ) defs
   ) def_use;
   graph
+
+(* Graph coloring ----------------------------------------------------------- *)
+
+type color = Reg of int | Stack
+
+let graph_coloring (f: function_def) =
+  let graph = interference_graph f in
+  let _color = Hashtbl.create 32 in
+
+  let rec simplify () =
+    let simplify_find id _ acc =
+      if Inter_graph.has_preference id graph then acc
+      else
+        let degree = Inter_graph.degree id graph in
+        match acc with
+        | Some (_, d) -> if degree < d then Some (id, degree) else acc
+        | None        -> if degree < k then Some (id, degree) else acc
+    in
+    match Hashtbl.fold simplify_find graph None with
+    | Some (v, _) -> select v
+    | None        -> coalesce ()
+  and coalesce () =
+    ()
+  and _freeze () =
+    let simplify_find id _ acc =
+      let degree = Inter_graph.degree id graph in
+      match acc with
+      | Some (_, d) -> if degree < d then Some (id, degree) else acc
+      | None        -> if degree < k then Some (id, degree) else acc
+    in
+    match Hashtbl.fold simplify_find graph None with
+    | Some (v, _) -> Inter_graph.remove_pref_edge v graph; simplify ()
+    | None        -> _spill ()
+  and _spill () =
+    ()
+  and select _v =
+    ()
+  in
+
+  simplify ()
 
