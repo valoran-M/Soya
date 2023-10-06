@@ -36,3 +36,5 @@ _opam/
 
 *.rtl
 *.liv
+*.png
+*.dot

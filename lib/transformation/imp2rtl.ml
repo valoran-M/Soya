@@ -37,7 +37,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Bool b -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
     | Var  v ->
       (match Hashtbl.find_opt env v with
-      | Some rv -> push_node (IMove (reg, rv, dest))
+      | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
       | None    -> push_node (ILoad (AddrGlobl v, reg, dest)))
     | Binop (op, e1, e2) -> tr_binop op e1 e2 reg dest
     | Call (s, le) ->

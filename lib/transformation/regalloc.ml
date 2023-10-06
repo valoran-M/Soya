@@ -3,6 +3,10 @@ open Lang.Mips
 
 module Reg_set = Set.Make(String)
 
+let reg = function
+  | Pseudo n -> Printf.sprintf "x%d" n
+  | Real r   -> r
+
 (* Liveness ----------------------------------------------------------------- *)
 
 let register =
@@ -33,11 +37,6 @@ let get_liveness (rtl_fun : function_def) =
     | Some (p, s) -> Hashtbl.replace pred_succ id (p,  succ :: s)
   in
 
-  let reg = function 
-    | Pseudo n -> Printf.sprintf "x%d" n
-    | Real r   -> r
-  in
-  
   (* Init data (in/out and pred/succ) for get liveness *)
   let rec init pred id =
     if not (Hashtbl.mem def_use id) then (
@@ -90,8 +89,8 @@ let get_liveness (rtl_fun : function_def) =
 
   (* liveness for liveness fixpoint *)
   let file = Queue.create () in
-  Hashtbl.iter (fun id _ -> Printf.printf "%d\n" id; Queue.add id file) rtl_fun.code;
-  
+  Hashtbl.iter (fun id _ -> Queue.add id file) rtl_fun.code;
+
   let rec liveness_assgn () =
     match Queue.take_opt file with
     | None    -> ()
@@ -109,18 +108,42 @@ let get_liveness (rtl_fun : function_def) =
       in
       let in_ = Reg_set.union use (Reg_set.diff out def) in
       add id in_ out;
-      Printf.printf "%d : " id;
-      Reg_set.iter (fun reg -> Printf.printf "%s " reg) in_;
-      Printf.printf " \ ";
-      if not (Reg_set.equal old_in in_) then (
-        List.iter (fun id -> Printf.printf "%d " id; Queue.add id file) pred);
-      Printf.printf "\n";
+      if not (Reg_set.equal old_in in_) then
+        List.iter (fun id -> Queue.add id file) pred;
       liveness_assgn ()
   in
 
   init (-1) rtl_fun.entry;
   liveness_assgn ();
-  in_out
+  def_use, in_out
 
-(* Reg Alloc ---------------------------------------------------------------- *)
+(* Interference Graph ------------------------------------------------------- *)
+
+type vertex = Preference | Interfere
+
+let create_interference (f : function_def) =
+  let graph = Hashtbl.create 16 in
+
+  let add id1 id2 ver =
+    let id1, id2 = if String.compare id2 id1 < 0 then id2, id1 else id1, id2 in
+    match Hashtbl.find_opt graph (id1, id2), ver with
+    | Some Interfere, Preference -> ()
+    | _ -> Hashtbl.replace graph (id1, id2) ver
+  in
+
+  let def_use, in_out = get_liveness f in
+
+  Hashtbl.iter (fun id (defs, _) ->
+    let out = match Hashtbl.find f.code id with
+      | IMove (rd, w, _) ->
+        add (reg rd) (reg w) Preference;
+        Reg_set.remove (reg w) (snd (Hashtbl.find in_out id))
+      | _ -> snd (Hashtbl.find in_out id)
+    in
+    let out = Reg_set.diff out defs in
+    Reg_set.iter (fun def ->
+      Reg_set.iter (fun o -> add def o Interfere) out
+    ) defs
+  ) def_use;
+  graph
 
