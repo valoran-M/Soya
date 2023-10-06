@@ -1,8 +1,11 @@
 type node  = int
 
-type reg =
-  | Real   of Mips.register
+type pseudo =
   | Pseudo of int
+
+type pseudo_reg =
+  | Pseu of int
+  | Real of Mips.register
 
 type ident = string
 
@@ -22,29 +25,29 @@ type condition =
   | CEq | CNeq
   | CLt
 
-type instruction =
+type 'reg instruction =
   | INop     of node
-  | IPutchar of reg * node
-  | IMove    of reg * reg * node
-  | IOp      of operation * reg list * reg * node
-  | ILoad    of address * reg * node
-  | IStore   of address * reg * node
-  | ICall    of ident * reg list * node
-  | ICond    of condition * reg list * node * node
-  | IReturn  of reg option
+  | IPutchar of 'reg * node
+  | IMove    of 'reg * 'reg * node
+  | IOp      of operation * 'reg list * 'reg * node
+  | ILoad    of address * 'reg * node
+  | IStore   of address * 'reg * node
+  | ICall    of ident * 'reg list * node
+  | ICond    of condition * 'reg list * node * node
+  | IReturn  of 'reg option
   | IGoto    of node
 
-type code = (node, instruction) Hashtbl.t
+type 'reg code = (node, 'reg instruction) Hashtbl.t
 
-type function_def = {
+type 'reg function_def = {
     name       : string;
-    params     : reg list;
-    code       : code;
+    params     : 'reg list;
+    code       : 'reg code;
     entry      : node;
   }
 
-type program = {
+type 'reg program = {
     globals   : string list;
-    functions : function_def list;
+    functions : ('reg function_def) list;
   }
 

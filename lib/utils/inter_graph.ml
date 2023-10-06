@@ -2,7 +2,7 @@ open Lang.Rtl
 
 type edge = Preference | Interfere
 
-type t = (reg, (reg, edge) Hashtbl.t) Hashtbl.t
+type t = (pseudo_reg, (pseudo_reg, edge) Hashtbl.t) Hashtbl.t
 
 let create () = Hashtbl.create 32
 

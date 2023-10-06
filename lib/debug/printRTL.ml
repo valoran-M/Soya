@@ -1,10 +1,14 @@
 open Format
-open Lang
+open Lang.Rtl
 
-let print_reg ppf (reg : Rtl.reg) =
+let print_pseudo ppf reg =
   match reg with
   | Pseudo r -> fprintf ppf "x%d" r
-  | Real s   -> fprintf ppf "%s" s
+
+let print_pseudo_reg ppf reg =
+  match reg with
+  | Pseu r -> fprintf ppf "x%d" r
+  | Real s -> fprintf ppf "%s" s
 
 let print_global ppf globals =
   let rec aux ppf globals =
@@ -14,7 +18,7 @@ let print_global ppf globals =
   in
   fprintf ppf "Globals:@[<v 2>%a@]@.@." aux globals
 
-let print_function ppf (f : Rtl.function_def) =
+let print_function ppf f print_reg =
   let rec print_arg ppf args =
     match args with
     | []        -> ()
@@ -24,40 +28,40 @@ let print_function ppf (f : Rtl.function_def) =
   let print_trans ppf id next_id =
     if id - 1 <> next_id then fprintf ppf "\tgoto %d\n" next_id
   in
-  let print_instruction ppf (inst : Rtl.instruction) id =
+  let print_instruction ppf inst id =
     fprintf ppf "%5d:\t" id;
     match inst with
-    | Rtl.INop n ->
+    | INop n ->
       if n = id + 1
       then fprintf ppf "nop\n"
       else fprintf ppf "goto %d\n" n
-    | Rtl.IPutchar (reg, next) ->
+    | IPutchar (reg, next) ->
       fprintf ppf "putchar %a\n" print_reg reg;
       print_trans ppf id next
-    | Rtl.IMove (r1, r2, n) ->
+    | IMove (r1, r2, n) ->
       fprintf ppf "%a <- %a\n" print_reg r1 print_reg r2;
       print_trans ppf id n
-    | Rtl.IOp (op, args, rd, n) ->
+    | IOp (op, args, rd, n) ->
       fprintf ppf "%a = %a\n" print_reg rd
         (PrintOp.print_op print_reg) (op, args);
       print_trans ppf id n
-    | Rtl.ILoad (addr, rd, n) -> 
+    | ILoad (addr, rd, n) -> 
       fprintf ppf "%a -> %a\n" PrintOp.print_addr addr print_reg rd;
       print_trans ppf id n
-    | Rtl.IStore (addr, rd, n) ->
+    | IStore (addr, rd, n) ->
       fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
       print_trans ppf id n
-    | Rtl.ICall (fun_id, args, n) ->
+    | ICall (fun_id, args, n) ->
       fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;
       print_trans ppf id n
-    | Rtl.ICond (c, args, nt, nf) ->
+    | ICond (c, args, nt, nf) ->
       fprintf ppf "if %a then goto %d else goto %d\n"
         (PrintOp.print_cond print_reg) (c, args) nt nf;
-    | Rtl.IReturn (Some r) ->
+    | IReturn (Some r) ->
       fprintf ppf "return %a\n" print_reg r
-    | Rtl.IReturn None ->
+    | IReturn None ->
       fprintf ppf "return\n"
-    | Rtl.IGoto n ->
+    | IGoto n ->
       fprintf ppf "goto %d\n" n
     in
   let ret_f =
@@ -69,13 +73,20 @@ let print_function ppf (f : Rtl.function_def) =
   List.iter (fun (id, inst) -> print_instruction ppf inst id) ret_f;
   fprintf ppf "}\n\n"
 
-let print_prog ppf (functions : Rtl.function_def list) =
-  List.iter (fun f -> fprintf ppf "%a@." print_function f) functions
+let print_prog ppf functions (print_reg : formatter -> 'a -> unit) =
+  List.iter (fun f -> print_function ppf f print_reg) functions
 
-let print_rtl (prog : Rtl.program) file ext =
+let print_reg_rtl (prog : pseudo_reg program) file ext =
   let file = Filename.remove_extension file ^ ext in
   let out = open_out file in
   let outf = formatter_of_out_channel out in
   print_global outf prog.globals;
-  print_prog outf prog.functions
+  print_prog outf prog.functions print_pseudo_reg
+
+let print_rtl (prog : pseudo program) file ext =
+  let file = Filename.remove_extension file ^ ext in
+  let out = open_out file in
+  let outf = formatter_of_out_channel out in
+  print_global outf prog.globals;
+  print_prog outf prog.functions print_pseudo
 

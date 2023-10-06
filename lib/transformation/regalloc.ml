@@ -4,13 +4,13 @@ open Lang.Mips
 
 module Reg_set = Set.Make(
   struct 
-    type t = reg
+    type t = pseudo_reg
     let compare t1 t2 =
       match (t1, t2) with
-      | Real r1,   Real r2   -> String.compare r1 r2
-      | Pseudo r1, Pseudo r2 -> Int.compare r1 r2
-      | Pseudo _,  Real _    -> -1
-      | Real _,    Pseudo _  ->  1
+      | Real r1, Real r2   -> String.compare r1 r2
+      | Pseu r1, Pseu r2 -> Int.compare r1 r2
+      | Pseu _,  Real _    -> -1
+      | Real _,  Pseu _  ->  1
 
   end
 )
@@ -37,7 +37,7 @@ let k = Array.length register
 
 (* Liveness ----------------------------------------------------------------- *)
 
-let get_liveness (rtl_fun : function_def) =
+let get_liveness (rtl_fun : pseudo_reg function_def) =
   (* Def and Use array *)
   let def_use = Hashtbl.create 32 in
   let add_def_use id def use =
@@ -141,7 +141,7 @@ let get_liveness (rtl_fun : function_def) =
 
 (* Interference Graph ------------------------------------------------------- *)
 
-let interference_graph (f : function_def) =
+let interference_graph (f : pseudo_reg function_def) =
   let graph = Inter_graph.create () in
 
   let def_use, in_out = get_liveness f in
@@ -164,7 +164,7 @@ let interference_graph (f : function_def) =
 
 type color = Reg of int | Stack
 
-let graph_coloring (f: function_def) =
+let graph_coloring (f: pseudo_reg function_def) =
   let graph = interference_graph f in
   let _color = Hashtbl.create 32 in
 

@@ -1,22 +1,5 @@
 open Lang.Imp
 open Lang.Rtl
-open Lang.Mips
-
-let fun_args_to_reg reg =
-  let rec aux acc regs args =
-    match regs, args with
-    | _,         []        -> acc
-    | [],        a :: args -> aux ((reg a :: acc)) [] args
-    | r :: reg,  _ :: args -> aux (r :: acc) reg args
-  in
-  aux [] [a0; a1; a2; a3]
-
-let nb_args_to_reg nb =
-  match nb with
-  | 0 -> a0 | 1 -> a1
-  | 2 -> a2 | 3 -> a3
-  | _ -> assert false
-
 
 let tr_function (fdef : Lang.Imp.function_def) =
   (* RTL code *)
@@ -31,7 +14,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
   in
 
   (* Save params and local variable in environement *)
-  let _ =
+  let params =
     List.map (fun a ->
       let r = new_reg () in
       Hashtbl.replace env a r; r)
@@ -47,7 +30,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
 
   (* Translate ---------------------------------------------------------------*)
 
-  let rec tr_expression exp (reg : reg) dest =
+  let rec tr_expression exp (reg : pseudo) dest =
     match exp with
     | Cst  n -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
@@ -60,9 +43,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let id_call = new_node () in
       let args, entry, _ =
         List.fold_right (fun exp (lr, dest, nb_arg) -> 
-          let reg = if nb_arg < 4
-                    then Real (nb_args_to_reg nb_arg)
-                    else assert false (* new_reg () *) in
+          let reg =  new_reg () in
           let id_node = tr_expression exp reg dest in
           (reg :: lr, id_node, nb_arg - 1))
         le ([], id_call, List.length le - 1)
@@ -131,17 +112,6 @@ let tr_function (fdef : Lang.Imp.function_def) =
   in
 
   let entry = tr_sequence fdef.code (push_node (IReturn None)) in
-  let params, entry =
-    let rec aux (na, e) regs (args : label list) =
-      match regs, args with
-      | _, [] -> (na, e)
-      | [], a :: args -> aux (Hashtbl.find env a :: na, e) [] args
-      | r :: reg,  a :: args ->
-        let new_entry = push_node (IMove (Hashtbl.find env a, r, e)) in
-        aux (r :: na, new_entry) reg args
-    in
-    aux ([], entry) [Real a0; Real a1; Real a2; Real a3] fdef.params
-  in
   {
     name = fdef.name;
     params;
@@ -149,9 +119,9 @@ let tr_function (fdef : Lang.Imp.function_def) =
     entry;
   }
 
-let tr_program (prog : Lang.Imp.program) =
+let tr_program (prog : Lang.Imp.program) : pseudo Lang.Rtl.program =
   {
-    globals = prog.globals;
+    globals   = prog.globals;
     functions = List.map (fun f -> tr_function f) prog.functions;
   }
 
