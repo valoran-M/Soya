@@ -7,8 +7,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
   let env  = Hashtbl.create 16 in
 
   (* Pseudo register and node interface *)
+  let reg  = ref (-1) in
   let new_reg, new_node =
-    let reg  = ref (-1) in
     let node = ref (-1) in
     (fun () -> incr reg;  Pseudo !reg ), (fun () -> incr node; !node)
   in
@@ -113,6 +113,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
 
   let entry = tr_sequence fdef.code (push_node (IReturn None)) in
   {
+    nb_reg = !reg;
     name = fdef.name;
     params;
     code;

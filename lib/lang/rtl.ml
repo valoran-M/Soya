@@ -32,6 +32,8 @@ type 'reg instruction =
   | IOp      of operation * 'reg list * 'reg * node
   | ILoad    of address * 'reg * node
   | IStore   of address * 'reg * node
+  | IPush    of 'reg * node
+  | IPop     of 'reg * node
   | ICall    of ident * 'reg list * node
   | ICond    of condition * 'reg list * node * node
   | IReturn  of 'reg option
@@ -40,6 +42,7 @@ type 'reg instruction =
 type 'reg code = (node, 'reg instruction) Hashtbl.t
 
 type 'reg function_def = {
+    nb_reg     : int;
     name       : string;
     params     : 'reg list;
     code       : 'reg code;

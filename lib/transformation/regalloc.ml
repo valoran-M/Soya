@@ -31,7 +31,7 @@ let callee_saved = List.map (fun r -> Real r)
 
 let register =
   [|t0; t1; t2; t3; t4; t5; t6; t7; t8; t9;
-  s0; s1; s2; s3; s4; s5; s6; s7|]
+    s0; s1; s2; s3; s4; s5; s6; s7|]
 
 let k = Array.length register
 
@@ -76,10 +76,12 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] (args);
         init id n
+      | IPop  (rd, n)
       | ILoad (_, rd, n) ->
         add_succ id n;
         add_def_use id [rd] [];
         init id n
+      | IPush (r, n)
       | IStore (_, r, n) ->
         add_succ id n;
         add_def_use id [] [r];
