@@ -24,6 +24,8 @@ let add v1 v2 edge (g: t) =
 let remove_edge v1 v2 graph =
   match Hashtbl.find_opt graph v1, Hashtbl.find_opt graph v2 with
   | Some n1, Some n2 -> Hashtbl.remove n1 v2; Hashtbl.remove n2 v1
+  | Some n, _ -> Hashtbl.remove n v2
+  | _, Some n -> Hashtbl.remove n v1
   | _, _ -> ()
 
 let remove_pref_edge v graph =

@@ -232,6 +232,6 @@ let graph_coloring (f: pseudo_reg function_def) =
   in
 
   Hashtbl.iter (fun id c -> 
-    Printf.printf "%s -> %s" (print_pseudo_reg id) (print_pseudo_reg c)
+    Printf.printf "%s -> %s\n" (print_pseudo_reg id) (print_pseudo_reg c)
   ) color
 
