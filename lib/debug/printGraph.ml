@@ -19,7 +19,7 @@ let print_graph a file ext =
       if not (Hashtbl.mem e (r1, r2)) then
         fprintf outf "\t\"%a\" -- \"%a\" %s;\n"
       print_pseudo_reg r1 print_pseudo_reg r2
-      (if p = Utils.Inter_graph.Preference
+      (if p = Utils.Interference_graph.Preference
       then "[style=dotted]"
       else "")
     ) neig

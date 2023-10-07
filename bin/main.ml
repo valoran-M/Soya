@@ -22,8 +22,6 @@ let () =
       imp_to_rtl prog
   in
   let _rtl = call_convention rtl in
-  Debug.PrintGraph.print_graph
-      (Translate.Regalloc.interference_graph (List.hd _rtl.functions)) !Option.output_file
-      ".dot";
+  Translate.Regalloc.graph_coloring (List.hd _rtl.functions);
   ()
 

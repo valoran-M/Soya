@@ -62,6 +62,15 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       dest Regs.callee_saved
   in
 
+  let set_args dest =
+    fst (List.fold_left (fun (dest, i) r ->
+      if i < 4
+      then push_n_node (IMove (reg r, nb_args_to_reg i, dest)), i+1
+      else (dest, i+1))
+      (dest, 0) fdef.params
+    )
+  in
+
   let tr_call id args dest =
     let nb_args = List.length args in
     let dest = push_n_node (ICall (id, [], nb_args, dest)) in
@@ -100,7 +109,8 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     else 1
   in
 
-  let entry = push_callee_save (tr_instruction (fdef.entry)) in
+  let entry = set_args (push_callee_save (tr_instruction (fdef.entry))) in
+
   Hashtbl.iter (fun id inst -> 
     match inst with
     | INop  n -> Hashtbl.replace code id (INop  (Hashtbl.find id_env n))
