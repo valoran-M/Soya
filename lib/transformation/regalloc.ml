@@ -24,16 +24,7 @@ let fun_args_to_reg =
   in
   aux [] [Real a0; Real a1; Real a2; Real a3]
 
-let caller_saved = List.map (fun r -> Real r)
-  [t0; t1; t2; t3; t4; t5; t6; t7; t8; t9]
-let callee_saved = List.map (fun r -> Real r)
-  [s0; s1; s2; s3; s4; s5; s6; s7]
-
-let register =
-  [|t0; t1; t2; t3; t4; t5; t6; t7; t8; t9;
-    s0; s1; s2; s3; s4; s5; s6; s7|]
-
-let k = Array.length register
+let k = Array.length Regs.register
 
 (* Liveness ----------------------------------------------------------------- *)
 
@@ -60,8 +51,8 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
 
   (* Init data (in/out and pred/succ) for get liveness *)
   let rec init pred id =
+    add_pred id pred;
     if not (Hashtbl.mem def_use id) then (
-      add_pred id pred;
       match Hashtbl.find rtl_fun.code id with
       | INop n -> add_succ id n; init id n
       | IPutchar (r, n) ->
@@ -86,9 +77,9 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [] [r];
         init id n
-      | ICall (_, args, n) ->
+      | ICall (_, args, _, n) ->
         add_succ id n;
-        add_def_use id caller_saved (fun_args_to_reg args);
+        add_def_use id Regs.caller_saved (fun_args_to_reg args);
         init id n
       | ICond (_, args, nt, nf) ->
         add_succ id nt; add_succ id nf;
@@ -96,9 +87,9 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         init id nt;
         init id nf
       | IReturn (Some _) ->
-        add_def_use id [] [Real v0]
+        add_def_use id [] ((Real v0) :: Regs.callee_saved)
       | IReturn None ->
-        add_def_use id [] []
+        add_def_use id [] Regs.callee_saved
       | IGoto n ->
         add_succ id n;
         init id n)

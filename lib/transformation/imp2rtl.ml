@@ -48,7 +48,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
           (reg :: lr, id_node, nb_arg - 1))
         le ([], id_call, List.length le - 1)
       in
-      Hashtbl.replace code id_call (ICall (s, args, dest));
+      Hashtbl.replace code id_call (ICall (s, args, List.length args, dest));
       entry
   and tr_binop (op : binop) e1 e2 reg dest =
     let op =
