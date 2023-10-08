@@ -58,8 +58,8 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
   in
 
   let pop_callee_save dest =
-    List.fold_left (fun d r -> push_n_node (IMove (r, Hashtbl.find env r, d)))
-      dest Regs.callee_saved
+    List.fold_right (fun r d -> push_n_node (IMove (r, Hashtbl.find env r, d)))
+      Regs.callee_saved dest
   in
 
   let set_args dest =
@@ -109,7 +109,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     else 1
   in
 
-  let entry = set_args (push_callee_save (tr_instruction (fdef.entry))) in
+  let entry = push_callee_save (set_args  (tr_instruction (fdef.entry))) in
 
   Hashtbl.iter (fun id inst -> 
     match inst with

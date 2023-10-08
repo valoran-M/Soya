@@ -15,15 +15,6 @@ module Reg_set = Set.Make(
   end
 )
 
-let fun_args_to_reg =
-  let rec aux acc regs args =
-    match regs, args with
-    | _,         []        -> acc
-    | [],        a :: args -> aux (a :: acc) [] args
-    | r :: reg,  _ :: args -> aux (r :: acc) reg args
-  in
-  aux [] [Real a0; Real a1; Real a2; Real a3]
-
 let k = List.length Regs.register
 
 (* Liveness ----------------------------------------------------------------- *)
@@ -93,7 +84,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
       | ICall (_, args, _, n) ->
         List.iter incr_reg args;
         add_succ id n;
-        add_def_use id Regs.caller_saved (fun_args_to_reg args);
+        add_def_use id Regs.caller_saved [Real a0; Real a1; Real a2; Real a3];
         init id n
       | ICond (_, args, nt, nf) ->
         List.iter incr_reg args;
@@ -171,18 +162,24 @@ let interference_graph (f : pseudo_reg function_def) =
 
 (* Graph coloring ----------------------------------------------------------- *)
 
+type color = Reg of pseudo_reg | Spill
+
 let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
 
   let get_color n =
-    let l = Seq.fold_left (fun acc (id, e) ->
+    let l = List.fold_left (fun acc (id, e) ->
       match e with
       | Interference_graph.Preference -> acc
       | Interference_graph.Interfere  ->
-        match Hashtbl.find_opt color id with
-        | None | Some (Pseu _) -> acc
-        | Some (Real r) -> List.filter (fun a -> a = r) acc
+        match id with
+        | Real r -> List.filter (fun a -> a <> r) acc
+        | _ ->
+          match Hashtbl.find_opt color id with
+          | None | Some (Reg (Pseu _) | Spill) -> acc
+          | Some (Reg (Real r)) ->
+            List.filter (fun a -> a <> r) acc
     ) Regs.register n in
     match l with
     | []     -> None
@@ -196,11 +193,13 @@ let graph_coloring (f: pseudo_reg function_def) =
 
   and coalesce () =
     match Interference_graph.get_george_preference_edge k graph with
+    | None -> freeze ()
     | Some (v1, v2) ->
       let v, rv = Interference_graph.merge v1 v2 graph in
       simplify ();
-      Hashtbl.replace color rv (Hashtbl.find color v)
-    | None -> freeze ()
+      match v with
+      | Real _ -> Hashtbl.replace color rv (Reg v)
+      | Pseu _ -> Hashtbl.replace color rv (Hashtbl.find color v)
 
   and freeze () =
     match Interference_graph.find_min k graph with
@@ -209,29 +208,21 @@ let graph_coloring (f: pseudo_reg function_def) =
 
   and spill () =
     if not (Interference_graph.is_empty graph) then
-      let min, _ = Hashtbl.fold (fun r nb (min, nb_min) ->
-          if nb < nb_min || min = Real "" then r, nb else min, nb_min)
-        reg_nb_use (Real "", 0) in
-      select min
+      match Interference_graph.get_min reg_nb_use graph with
+      | None -> ()
+      | Some r -> select r
 
   and select v =
-    let nv = Hashtbl.to_seq (Hashtbl.find graph v) in
+    let nv = List.of_seq (Hashtbl.to_seq (Hashtbl.find graph v)) in
     Interference_graph.remove v graph;
     simplify ();
-    match get_color nv with
-    | Some c -> Hashtbl.replace color v (Real c)
-    | None   -> ()
+    match v with
+    | Real _ -> Hashtbl.replace color v (Reg v)
+    | _ ->
+      match get_color nv with
+      | Some c -> Hashtbl.replace color v (Reg (Real c))
+      | None   -> Hashtbl.replace color v Spill
   in
 
-  simplify ();
-
-  let print_pseudo_reg reg =
-    match reg with
-    | Pseu r -> Printf.sprintf "x%d" r
-    | Real s -> Printf.sprintf "%s" s
-  in
-
-  Hashtbl.iter (fun id c -> 
-    Printf.printf "%s -> %s\n" (print_pseudo_reg id) (print_pseudo_reg c)
-  ) color
+  simplify ()
 

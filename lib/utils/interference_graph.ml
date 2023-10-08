@@ -6,6 +6,16 @@ type t = (pseudo_reg, (pseudo_reg, edge) Hashtbl.t) Hashtbl.t
 
 let create () = Hashtbl.create 32
 
+let add_edge v1 v2 edge g =
+  let add_aux n v e =
+    match Hashtbl.find_opt n v with
+    | None | Some Preference -> Hashtbl.replace n v e
+    | _ -> ()
+  in
+  match Hashtbl.find_opt g v1, Hashtbl.find_opt g v2 with
+  | Some n1, Some n2 -> add_aux n1 v2 edge; add_aux n2 v1 edge
+  | _, _ -> ()
+
 let add v1 v2 edge (g: t) =
   let add_aux id1 id2 =
     match Hashtbl.find_opt g id1 with
@@ -59,17 +69,16 @@ let is_neighbour v1 v2 edge graph =
   | None    -> false
   | Some n1 ->
     match Hashtbl.find_opt n1 v2 with
-    | Some e -> e = edge
     | None   -> false
+    | Some e -> e = edge
 
 let is_empty graph = Hashtbl.length graph = 0
 
 let merge v1 v2 graph =
   match v1, v2 with
   | (Real _ as v1), v2 | v2, (Real _ as v1) | v1, v2 ->
-    let n1 = Hashtbl.find graph v1 in
     Hashtbl.iter (fun id e ->
-      if id <> v1 then Hashtbl.replace n1 id e
+      if id <> v1 then add_edge id v1 e graph
     ) (Hashtbl.find graph v2);
     remove v2 graph;
     v1, v2
@@ -77,43 +86,63 @@ let merge v1 v2 graph =
 (* simplify find *)
 let find_min_without_pref k graph =
   let aux id _ acc =
-    if has_preference id graph then acc
-    else
-      let degree = degree id graph in
-      match acc with
-      | Some (_, d) -> if degree < d then Some (id, degree) else acc
-      | None        -> if degree < k then Some (id, degree) else acc
+    match id with
+    | Real _ -> acc
+    | _ ->
+      if has_preference id graph then acc
+      else
+        let degree = degree id graph in
+        match acc with
+        | Some (_, d) -> if degree < d then Some (id, degree) else acc
+        | None        -> if degree < k then Some (id, degree) else acc
   in
   Hashtbl.fold aux graph None
 
 (* freeze find *)
 let find_min k graph =
   let aux id _ acc =
-    let degree = degree id graph in
-    match acc with
-    | Some (_, d) -> if degree < d then Some (id, degree) else acc
-    | None        -> if degree < k then Some (id, degree) else acc
+    match id with
+    | Real _ -> acc
+    | _ ->
+      let degree = degree id graph in
+      match acc with
+      | Some (Pseu _, d) -> if degree < d then Some (id, degree) else acc
+      | _                -> if degree < k then Some (id, degree) else acc
   in
   Hashtbl.fold aux graph None
+
+(* spill find *)
+let get_min reg_nb_use graph =
+  let aux r _ (min, nb_min) =
+    match r, Hashtbl.find_opt reg_nb_use r with
+    | Real _, _ | _, None -> (min, nb_min)
+    | _, Some nb ->
+      match min with
+      | None -> (Some r, nb)
+      | Some _ ->
+        if nb < nb_min then Some r, nb else min, nb_min
+  in
+  fst (Hashtbl.fold aux graph (None, 0))
+
 
 (* coalesce find *)
 let get_george_preference_edge k graph =
   let george v1 v2 =
-    match v1, v2 with
-    | (Pseu _ as v2), v1 | v1, (Pseu _ as v2)  ->
-      Hashtbl.fold (fun r edge acc ->
-        acc &&
-        match r with
-        | Real _ -> is_neighbour r v2 edge graph
-        | Pseu _ -> degree r graph < k || is_neighbour r v2 edge graph
-      ) (Hashtbl.find graph v1) true
-    | (Real _ as v2), v1 (* | v1, (Real _ as v2) *) ->
-      Hashtbl.fold (fun r edge acc ->
-        acc &&
-        match r with
-        | Pseu _ -> is_neighbour r v2 edge graph
-        | Real _ -> degree r graph < k || is_neighbour r v2 edge graph
-      ) (Hashtbl.find graph v1) true
+      match v1, v2 with
+      | (Pseu _ as v2), v1 | v1, (Pseu _ as v2)  ->
+        Hashtbl.fold (fun r edge acc ->
+          acc &&
+          match r with
+          | Real _ -> is_neighbour r v2 edge graph
+          | Pseu _ -> degree r graph < k || is_neighbour r v2 edge graph
+        ) (Hashtbl.find graph v1) true
+      | (Real _ as v2), v1 (* | v1, (Real _ as v2) *) ->
+        Hashtbl.fold (fun r edge acc ->
+          acc &&
+          match r with
+          | Pseu _ -> is_neighbour r v2 edge graph
+          | Real _ -> degree r graph < k || is_neighbour r v2 edge graph
+        ) (Hashtbl.find graph v1) true
   in
   Hashtbl.fold (fun v1 neig acc ->
     match acc with
@@ -123,7 +152,7 @@ let get_george_preference_edge k graph =
         match acc with
         | Some _ -> acc
         | None   ->
-          if Preference = e &&  george v1 v2 then Some (v1, v2) else acc
+          if Preference = e && george v1 v2 then Some (v1, v2) else acc
       ) neig None
   ) graph None
 
