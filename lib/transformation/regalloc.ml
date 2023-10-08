@@ -162,7 +162,7 @@ let interference_graph (f : pseudo_reg function_def) =
 
 (* Graph coloring ----------------------------------------------------------- *)
 
-type color = Reg of pseudo_reg | Spill
+type color = Reg of Lang.Mips.register | Spill
 
 let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
@@ -177,8 +177,8 @@ let graph_coloring (f: pseudo_reg function_def) =
         | Real r -> List.filter (fun a -> a <> r) acc
         | _ ->
           match Hashtbl.find_opt color id with
-          | None | Some (Reg (Pseu _) | Spill) -> acc
-          | Some (Reg (Real r)) ->
+          | None | Some Spill -> acc
+          | Some (Reg r) ->
             List.filter (fun a -> a <> r) acc
     ) Regs.register n in
     match l with
@@ -198,7 +198,7 @@ let graph_coloring (f: pseudo_reg function_def) =
       let v, rv = Interference_graph.merge v1 v2 graph in
       simplify ();
       match v with
-      | Real _ -> Hashtbl.replace color rv (Reg v)
+      | Real r -> Hashtbl.replace color rv (Reg r)
       | Pseu _ -> Hashtbl.replace color rv (Hashtbl.find color v)
 
   and freeze () =
@@ -217,12 +217,13 @@ let graph_coloring (f: pseudo_reg function_def) =
     Interference_graph.remove v graph;
     simplify ();
     match v with
-    | Real _ -> Hashtbl.replace color v (Reg v)
+    | Real r -> Hashtbl.replace color v (Reg r)
     | _ ->
       match get_color nv with
-      | Some c -> Hashtbl.replace color v (Reg (Real c))
+      | Some c -> Hashtbl.replace color v (Reg c)
       | None   -> Hashtbl.replace color v Spill
   in
 
-  simplify ()
+  simplify ();
+  color
 

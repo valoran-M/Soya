@@ -35,6 +35,7 @@ _opam/
 # End of https://www.toptal.com/developers/gitignore/api/ocaml
 
 *.rtl*
+*.ltl*
 *.liv
 *.png
 *.dot
