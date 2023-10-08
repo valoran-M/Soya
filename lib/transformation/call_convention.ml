@@ -103,7 +103,6 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
       in
-      Printf.printf "%d\n" i;
       let node = Hashtbl.find code bid in
       Hashtbl.remove code bid;
       Hashtbl.replace code nid node;

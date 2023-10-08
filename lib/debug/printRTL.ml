@@ -25,58 +25,56 @@ let print_function ppf f print_reg =
     | [ a ]     -> fprintf ppf "%a" print_reg a
     | a :: args -> fprintf ppf "%a, %a" print_reg a print_arg args
   in
-  let print_trans ppf id next_id =
-    if id - 1 <> next_id then fprintf ppf "\tgoto %d\n" next_id
-  in
-  let print_instruction ppf inst id =
-    fprintf ppf "%5d:\t" id;
-    match inst with
-    | INop n ->
-      if n = id + 1
-      then fprintf ppf "nop\n"
-      else fprintf ppf "goto %d\n" n
-    | IPutchar (reg, next) ->
-      fprintf ppf "putchar %a\n" print_reg reg;
-      print_trans ppf id next
-    | IMove (r1, r2, n) ->
-      fprintf ppf "%a <- %a\n" print_reg r1 print_reg r2;
-      print_trans ppf id n
-    | IOp (op, args, rd, n) ->
-      fprintf ppf "%a = %a\n" print_reg rd
-        (PrintOp.print_op print_reg) (op, args);
-      print_trans ppf id n
-    | ILoad (addr, rd, n) -> 
-      fprintf ppf "%a -> %a\n" PrintOp.print_addr addr print_reg rd;
-      print_trans ppf id n
-    | IStore (addr, rd, n) ->
-      fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
-      print_trans ppf id n
-    | IPop (rd, n) ->
-      fprintf ppf "pop %a\n" print_reg rd;
-      print_trans ppf id n
-    | IPush (rd, n) ->
-      fprintf ppf "push %a\n" print_reg rd;
-      print_trans ppf id n
-    | ICall (fun_id, args, _, n) ->
-      fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;
-      print_trans ppf id n
-    | ICond (c, args, nt, nf) ->
-      fprintf ppf "if %a then goto %d else goto %d\n"
-        (PrintOp.print_cond print_reg) (c, args) nt nf;
-    | IReturn (Some r) ->
-      fprintf ppf "return %a\n" print_reg r
-    | IReturn None ->
-      fprintf ppf "return\n"
-    | IGoto n ->
-      fprintf ppf "goto %d\n" n
+
+  let see = Hashtbl.create 16 in
+  let rec print_instruction ppf id =
+    if not (Hashtbl.mem see id) then (
+      Hashtbl.add see id ();
+      fprintf ppf "%5d:\t" id;
+      match Hashtbl.find f.code id with
+      | INop n ->
+        fprintf ppf "goto %d\n" n; print_instruction ppf n
+      | IPutchar (reg, next) ->
+        fprintf ppf "putchar %a\n" print_reg reg;
+        print_instruction ppf next
+      | IMove (r1, r2, n) ->
+        fprintf ppf "%a <- %a\n" print_reg r1 print_reg r2;
+        print_instruction ppf n;
+      | IOp (op, args, rd, n) ->
+        fprintf ppf "%a = %a\n" print_reg rd
+          (PrintOp.print_op print_reg) (op, args);
+        print_instruction ppf n;
+      | ILoad (addr, rd, n) -> 
+        fprintf ppf "%a -> %a\n" PrintOp.print_addr addr print_reg rd;
+        print_instruction ppf n
+      | IStore (addr, rd, n) ->
+        fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
+        print_instruction ppf n;
+      | IPop (rd, n) ->
+        fprintf ppf "pop %a\n" print_reg rd;
+        print_instruction ppf n;
+      | IPush (rd, n) ->
+        fprintf ppf "push %a\n" print_reg rd;
+        print_instruction ppf n;
+      | ICall (fun_id, args, _, n) ->
+        fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;
+        print_instruction ppf n;
+      | ICond (c, args, nt, nf) ->
+        fprintf ppf "if %a then goto %d else goto %d\n"
+          (PrintOp.print_cond print_reg) (c, args) nt nf;
+        print_instruction ppf nt;
+        print_instruction ppf nf;
+      | IReturn (Some r) ->
+        fprintf ppf "return %a\n" print_reg r
+      | IReturn None ->
+        fprintf ppf "return\n"
+      | IGoto n ->
+        fprintf ppf "goto %d\n" n;
+        print_instruction ppf n)
     in
-  let ret_f =
-    List.sort (fun (id1, _) (id2, _) -> Int.compare id2 id1)
-      (List.of_seq (Hashtbl.to_seq f.code))
-  in
+  
   fprintf ppf "%s(%a) {\n" f.name print_arg f.params;
-  print_trans ppf f.entry (match ret_f with (id1, _) :: _ -> (id1 - 1) | _ -> -1);
-  List.iter (fun (id, inst) -> print_instruction ppf inst id) ret_f;
+  print_instruction ppf f.entry;
   fprintf ppf "}\n\n"
 
 let print_prog ppf functions (print_reg : formatter -> 'a -> unit) =
