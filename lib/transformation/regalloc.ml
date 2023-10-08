@@ -162,11 +162,16 @@ let interference_graph (f : pseudo_reg function_def) =
 
 (* Graph coloring ----------------------------------------------------------- *)
 
-type color = Reg of Lang.Mips.register | Spill
+type color = Reg of Lang.Mips.register | Spill of int
 
 let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
+
+  let new_spill =
+    let spill = ref (-1) in
+    fun () -> incr spill; !spill
+  in
 
   let get_color n =
     let l = List.fold_left (fun acc (id, e) ->
@@ -177,7 +182,7 @@ let graph_coloring (f: pseudo_reg function_def) =
         | Real r -> List.filter (fun a -> a <> r) acc
         | _ ->
           match Hashtbl.find_opt color id with
-          | None | Some Spill -> acc
+          | None | Some (Spill _) -> acc
           | Some (Reg r) ->
             List.filter (fun a -> a <> r) acc
     ) Regs.register n in
@@ -221,7 +226,7 @@ let graph_coloring (f: pseudo_reg function_def) =
     | _ ->
       match get_color nv with
       | Some c -> Hashtbl.replace color v (Reg c)
-      | None   -> Hashtbl.replace color v Spill
+      | None   -> Hashtbl.replace color v (Spill (new_spill ()))
   in
 
   simplify ();

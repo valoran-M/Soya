@@ -27,7 +27,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     | Rtl.Real r -> Reg r
     | _ ->
       match Hashtbl.find color r with
-      | Regalloc.Spill -> failwith "TODO\n" 
+      | Regalloc.Spill _ -> failwith "TODO\n" 
       | Regalloc.Reg r -> Reg r
   in
 
