@@ -19,9 +19,6 @@ let print_function ppf f print_reg =
       Hashtbl.add see id ();
       fprintf ppf "%5d:\t" id;
       match Hashtbl.find f.code id with
-      | INop n ->
-        fprintf ppf "goto %d\n" n;
-        print_instruction ppf n
       | IPutchar (reg, n) ->
         fprintf ppf "putchar %a\n" print_reg reg;
         print_instruction ppf n

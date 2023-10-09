@@ -36,7 +36,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       let inst = Hashtbl.find def.code i in
       Hashtbl.remove def.code i;
       match inst with
-      | Rtl.INop n                -> push_node i (INop ((tr_instruction n)))
+      | Rtl.INop n                -> push_node i (IGoto ((tr_instruction n)))
       | Rtl.IGoto n               -> push_node i (IGoto (tr_instruction n))
       | Rtl.ICall (id, _, i, n)   -> push_node i (ICall (id, i, n))
       | Rtl.IReturn None          -> push_node i (IReturn None)
@@ -96,14 +96,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     assert false
   in
 
-
   let entry = tr_instruction def.entry in
-  Hashtbl.iter (fun id inst -> 
-    match inst with
-    | INop  n -> Hashtbl.replace code id (INop  (Hashtbl.find id_env n))
-    | IGoto n -> Hashtbl.replace code id (IGoto (Hashtbl.find id_env n))
-    | _ -> ()
-  ) code;
   {
     name = def.name;
     code;

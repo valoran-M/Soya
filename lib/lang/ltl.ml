@@ -7,7 +7,6 @@ type reg = Mips.register
 type ident = string
 
 type instruction =
-  | INop     of node
   | IPutchar of reg * node
   | IMove    of reg * reg * node
   | IOp      of operation * reg list * reg * node
