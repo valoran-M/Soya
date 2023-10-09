@@ -9,7 +9,6 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
   
   let id_env = Hashtbl.create 32 in
 
-  (* Pseudo register and node interface *)
   let new_node =
     let node = ref (-1) in
     (fun () -> incr node; !node)
@@ -32,25 +31,31 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
   in
 
   let rec tr_instruction i =
-    if Hashtbl.mem def.code i then
-      let inst = Hashtbl.find def.code i in
-      Hashtbl.remove def.code i;
-      match inst with
-      | Rtl.INop n                -> push_node i (IGoto ((tr_instruction n)))
-      | Rtl.IGoto n               -> push_node i (IGoto (tr_instruction n))
-      | Rtl.ICall (id, _, i, n)   -> push_node i (ICall (id, i, n))
-      | Rtl.IReturn None          -> push_node i (IReturn None)
-      | Rtl.IPutchar (r, n)       -> tr_putchar i r (tr_instruction n)
-      | Rtl.IMove (r1, r2, n)     -> tr_move i r1 r2 (tr_instruction n)
-      | Rtl.IOp (op, lr, r, n)    -> tr_op i op lr r n
-      | Rtl.ILoad  (a, r, n)      -> tr_load i a r (tr_instruction n)
-      | Rtl.IStore (a, r, n)      -> tr_store i a r (tr_instruction n)
-      | Rtl.IPush (r, n)          -> tr_push i r (tr_instruction n)
-      | Rtl.IPop (r, n)           -> tr_pop i r (tr_instruction n)
-      | Rtl.ICond (c, lr, nt, nf) ->
-        tr_cond c lr (tr_instruction nt) (tr_instruction nf)
-      | _ -> assert false
-    else 1
+    match Hashtbl.find_opt id_env i with
+    | Some i' -> i'
+    | None ->
+      let nid = new_node () in
+      Hashtbl.add id_env i nid;
+      let bid = match Hashtbl.find def.code i with
+        | Rtl.INop n                -> push_node i (IGoto ((tr_instruction n)))
+        | Rtl.IGoto n               -> push_node i (IGoto (tr_instruction n))
+        | Rtl.ICall (id, _, i, n)   -> push_node i (ICall (id, i, n))
+        | Rtl.IReturn None          -> push_node i (IReturn None)
+        | Rtl.IPutchar (r, n)       -> tr_putchar i r (tr_instruction n)
+        | Rtl.IMove (r1, r2, n)     -> tr_move i r1 r2 (tr_instruction n)
+        | Rtl.IOp (op, lr, r, n)    -> tr_op i op lr r n
+        | Rtl.ILoad  (a, r, n)      -> tr_load i a r (tr_instruction n)
+        | Rtl.IStore (a, r, n)      -> tr_store i a r (tr_instruction n)
+        | Rtl.IPush (r, n)          -> tr_push i r (tr_instruction n)
+        | Rtl.IPop (r, n)           -> tr_pop i r (tr_instruction n)
+        | Rtl.ICond (c, lr, nt, nf) ->
+          tr_cond c lr (tr_instruction nt) (tr_instruction nf)
+        | _ -> assert false
+      in
+      let node = Hashtbl.find code bid in
+      Hashtbl.remove code bid;
+      Hashtbl.replace code nid node;
+      nid
   and tr_load i a r dest =
     (match get_reg r with
     | Reg r   -> push_node i (ILoad (a, r, dest))

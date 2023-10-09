@@ -77,10 +77,9 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     match Hashtbl.find_opt id_env i with
     | Some i' -> i'
     | None ->
-      let inst = Hashtbl.find fdef.code i in
       let nid = new_node () in
       Hashtbl.add id_env i nid;
-      let bid = match inst with
+      let bid = match Hashtbl.find fdef.code i with
       | INop n           -> push_node (INop (tr_instruction n))
       | IGoto n          -> push_node (IGoto (tr_instruction n))
       | IPutchar(r,n)    -> push_node (IPutchar (reg r, tr_instruction n))
