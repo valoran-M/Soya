@@ -57,7 +57,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
       | IPutchar (r, n) ->
         incr_reg r;
         add_succ id n;
-        add_def_use id [] [r];
+        add_def_use id [Real a0] [r; Real a0];
         init id n
       | IMove (rd, r, n) ->
         incr_reg r; incr_reg rd;
@@ -82,9 +82,12 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_def_use id [] [r];
         init id n
       | ICall (_, args, _, n) ->
+        let nb_args = List.length args in
         List.iter incr_reg args;
         add_succ id n;
-        add_def_use id Regs.caller_saved [Real a0; Real a1; Real a2; Real a3];
+        add_def_use id Regs.caller_saved
+          (Util.get_k_first (min 4 nb_args)
+            [Real a0; Real a1; Real a2; Real a3]);
         init id n
       | ICond (_, args, nt, nf) ->
         List.iter incr_reg args;
