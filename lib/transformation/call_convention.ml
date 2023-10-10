@@ -64,9 +64,14 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     )
   in
 
-  let tr_call id args dest =
+  let tr_call id args dest r =
     let nb_args = List.length args in
-    let dest = push_node (ICall (id, [], nb_args, dest)) in
+    let dest =
+      match r with
+      | None -> dest
+      | Some r -> push_node (IMove (reg r, Real v0, dest))
+    in
+    let dest = push_node (ICall (id, [], nb_args, None, dest)) in
     fst (List.fold_left (fun (dest, i) r ->
       if i < 4 then (push_node (IMove(nb_args_to_reg i, reg r, dest)),i+1)
                else (push_node (IPush(reg r, dest)),i+1)
@@ -89,7 +94,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       | IStore(a,r,n)    -> push_node (IStore(a, reg r, tr_instruction n))
       | IPush(a,n)       -> push_node (IPush(reg a, tr_instruction n))
       | IPop(a,n)        -> push_node (IPop(reg a, tr_instruction n))
-      | ICall(id,lr,_,n) -> tr_call id lr (tr_instruction n)
+      | ICall(id,lr,_,r,n)-> tr_call id lr (tr_instruction n) r
       | ICond(c,lr,nt,nf) ->
         push_node
           (ICond(c, List.map reg lr, tr_instruction nt, tr_instruction nf))
@@ -98,7 +103,8 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
       | IReturn (Some r) ->
-        let dest = push_node (IReturn (Some (reg r))) in
+        let dest = push_node (IReturn None) in
+        let dest = push_node (IMove (Real v0, reg r, dest)) in
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
       in

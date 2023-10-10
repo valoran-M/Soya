@@ -1,0 +1,12 @@
+function main() {
+  putchar(x(3));
+}
+
+function x(y) {
+  while (y < 10){
+    return y + x(y+1);
+  }
+  return 12;
+}
+
+// prints '6'

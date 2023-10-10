@@ -81,12 +81,12 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [] [r];
         init id n
-      | ICall (_, args, _, n) ->
+      | ICall (_, args, _, _, n) ->
         let nb_args = List.length args in
         List.iter incr_reg args;
         add_succ id n;
         add_def_use id Regs.caller_saved
-          (Util.get_k_first (min 4 nb_args)
+          (Real v0 :: Util.get_k_first (min 4 nb_args)
             [Real a0; Real a1; Real a2; Real a3]);
         init id n
       | ICond (_, args, nt, nf) ->

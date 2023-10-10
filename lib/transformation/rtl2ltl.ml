@@ -45,7 +45,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
         | ILoad  (a,r,n)     -> tr_load a r (tr_instruction n)
         | IStore (a,r,n)     -> tr_store a r (tr_instruction n)
         | IPush (r,n)        -> tr_push r (tr_instruction n)
-        | ICall (id,_,i,n)   -> push_node (ICall (id, i, (tr_instruction n)))
+        | ICall (id,_,i,_,n) -> push_node (ICall (id, i, (tr_instruction n)))
         | ICond (c,lr,nt,nf) -> tr_cond c lr (tr_instruction nt)
                                              (tr_instruction nf)
         | _ -> assert false
@@ -103,13 +103,13 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       | Spill n -> push_node (IStore (Rtl.AddrStack (-4 * n), r, dest)))
     dest args regs
   and tr_op op args r dest =
-    let regs = fst (List.fold_left (fun (a, t) r -> 
+    let regs = fst (List.fold_right (fun r (a, t) -> 
       match get_reg r with
       | Reg r   -> (r :: a, t)
       | Spill _ -> match t with
                   | r :: t -> (r :: a, t)
                   | _ -> assert false
-    ) ([], [Mips.t8; Mips.t9]) args) in
+    ) args ([], [Mips.t8; Mips.t9])) in
     let dest = match get_reg r with
       | Reg r   -> push_node (IOp (op, regs, r, dest))
       | Spill n -> push_node (IOp (op, regs, Mips.t8, (push_node

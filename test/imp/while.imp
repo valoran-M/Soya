@@ -1,0 +1,14 @@
+var i;
+var j;
+function main() {
+  j = 1;
+  i = 1;
+  while (i < 10){
+    j = j * i;
+    i = i + 1;
+  }
+  putchar(j+(-362840));
+}
+
+//prints "("
+

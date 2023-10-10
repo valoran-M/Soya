@@ -33,7 +33,7 @@ type 'reg instruction =
   | IStore   of address * 'reg * node
   | IPush    of 'reg * node
   | IPop     of 'reg * node
-  | ICall    of ident * 'reg list * int * node
+  | ICall    of ident * 'reg list * int * 'reg option * node
   | ICond    of condition * 'reg list * node * node
   | IReturn  of 'reg option
   | IGoto    of node

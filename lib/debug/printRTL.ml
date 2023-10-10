@@ -56,7 +56,7 @@ let print_function ppf f print_reg =
       | IPush (rd, n) ->
         fprintf ppf "push %a\n" print_reg rd;
         print_instruction ppf n;
-      | ICall (fun_id, args, _, n) ->
+      | ICall (fun_id, args, _, _, n) ->
         fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;
         print_instruction ppf n;
       | ICond (c, args, nt, nf) ->
