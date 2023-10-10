@@ -11,34 +11,26 @@ let pop  reg =
   @@ addi sp sp 4
 
 let tr_function (fdef : Linear.function_def) =
-  let one_arg args =
-    match args with
-    | x :: _ -> x
-    | _ -> assert false
-  in
-
-  let two_args args =
-    match args with
-    | x1 :: x2 :: _ -> x1, x2
-    | _ -> assert false
-  in
-
   let tr_op op args r =
-    match op with
-    | OConst n -> li r n
-    | OAdd     -> let r1, r2 = two_args args in add r r1 r2
-    | OMul     -> let r1, r2 = two_args args in mul r r1 r2
-    | OLt      -> let r1, r2 = two_args args in slt r r1 r2
+    match op, args with
+    | OConst n,  []       -> li r n
+    | OAddImm n, [r1]     -> addi r r1 n
+    | OMulImm n, [r1]     -> addi r r1 n
+    | OAdd,      [r1; r2] -> add r r1 r2
+    | OMul,      [r1; r2] -> mul r r1 r2
+    | OLt,       [r1; r2] -> slt r r1 r2
+    | _ -> assert false
   in
   
   let tr_cond c args l =
-    match c with
-    | CEqi i  -> let r = one_arg args in beqi r i l
-    | CNeqi i -> let r = one_arg args in bnei r i l
-    | CEq     -> let r1, r2 = two_args args in beq  r1 r2 l
-    | CNeq    -> let r1, r2 = two_args args in bne r1 r2 l
-    | CLt     -> let r1, r2 = two_args args in blt r1 r2 l
-    | CGe     -> let r1, r2 = two_args args in bge r1 r2 l
+    match c, args with
+    | CEqi i,  [r]      -> beqi r i l
+    | CNeqi i, [r]      -> bnei r i l
+    | CEq,     [r1; r2] -> beq  r1 r2 l
+    | CNeq,    [r1; r2] -> bne r1 r2 l
+    | CLt,     [r1; r2] -> blt r1 r2 l
+    | CGe,     [r1; r2] -> bge r1 r2 l
+    | _ -> assert false
   in
 
   let tr_load a r =

@@ -7,6 +7,8 @@ type address =
 
 type operation =
   | OConst of int
+  | OAddImm of int
+  | OMulImm of int
   | OAdd  | OMul
   | OLt
 
