@@ -59,21 +59,21 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     (match get_reg r with
     | Reg r   -> push_node (ILoad (a, r, dest))
     | Spill n -> push_node (ILoad (a, Mips.t8, push_node
-                           (IStore (Rtl.AddrStack n, Mips.t8, dest)))))
+                           (IStore (Rtl.AddrStack (-4 * n), Mips.t8, dest)))))
   and tr_store a r dest =
     (match get_reg r with
     | Reg r   -> push_node (IStore (a, r, dest))
-    | Spill n -> push_node (ILoad (Rtl.AddrStack n, Mips.t8, push_node
+    | Spill n -> push_node (ILoad (Rtl.AddrStack (-4 * n), Mips.t8, push_node
                            (IStore (a, Mips.t8, dest)))))
   and tr_push r dest =
     (match get_reg r with
     | Reg r   -> push_node (IPush (r, dest))
-    | Spill n -> push_node (ILoad (Rtl.AddrStack n, Mips.t8, push_node
+    | Spill n -> push_node (ILoad (Rtl.AddrStack (-4 * n), Mips.t8, push_node
                            (IPush (Mips.t8, dest)))))
   and tr_putchar r dest=
     (match get_reg r with
     | Reg r   -> push_node (IPutchar (r, dest))
-    | Spill n -> push_node (ILoad (Rtl.AddrStack n, Mips.t8, push_node
+    | Spill n -> push_node (ILoad (Rtl.AddrStack (-4 * n), Mips.t8, push_node
                            (IPutchar (Mips.t8, dest)))))
   and tr_move r1 r2 dest =
     match get_reg r1, get_reg r2 with
@@ -81,26 +81,26 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       if r1 = r2 then dest
                  else push_node (IMove (r1, r2, dest))
     | Spill n, Reg r2  ->
-      push_node (IStore (Rtl.AddrStack n, r2, dest))
+      push_node (IStore (Rtl.AddrStack (-4 * n), r2, dest))
     | Reg r,   Spill n ->
       push_node (IMove (r, Mips.t8, push_node
-                (ILoad (Rtl.AddrStack n, Mips.t8, dest))))
+                (ILoad (Rtl.AddrStack (-4 * n), Mips.t8, dest))))
     | Spill n1, Spill n2 ->
-      push_node (IStore (Rtl.AddrStack n1, Mips.t8, push_node
-                (ILoad (Rtl.AddrStack n2, Mips.t8, dest))))
+      push_node (IStore (Rtl.AddrStack (-4 * n1), Mips.t8, push_node
+                (ILoad (Rtl.AddrStack (-4 * n2), Mips.t8, dest))))
   and tr_cond c args nt nf =
-    let regs = fst (List.fold_left (fun (a, t) r -> 
+    let regs = fst (List.fold_right (fun r (a, t) -> 
       match get_reg r with
       | Reg r   -> (r :: a, t)
       | Spill _ -> match t with
                   | r :: t -> (r :: a, t)
                   | _ -> assert false
-    ) ([], [Mips.t8; Mips.t9]) args) in
+    ) args ([], [Mips.t8; Mips.t9])) in
     let dest = push_node (ICond (c, regs, nt, nf)) in
     List.fold_left2 (fun dest pr r ->
       match get_reg pr with
       | Reg _   -> dest
-      | Spill n -> push_node (IStore (Rtl.AddrStack n, r, dest)))
+      | Spill n -> push_node (IStore (Rtl.AddrStack (-4 * n), r, dest)))
     dest args regs
   and tr_op op args r dest =
     let regs = fst (List.fold_left (fun (a, t) r -> 
@@ -113,12 +113,12 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     let dest = match get_reg r with
       | Reg r   -> push_node (IOp (op, regs, r, dest))
       | Spill n -> push_node (IOp (op, regs, Mips.t8, (push_node
-                             (IStore (Rtl.AddrStack n, Mips.t8, dest)))))
+                             (IStore (Rtl.AddrStack (-4 * n), Mips.t8, dest)))))
     in
     List.fold_left2 (fun dest pr r ->
       match get_reg pr with
       | Reg _   -> dest
-      | Spill n -> push_node (IStore (Rtl.AddrStack n, r, dest)))
+      | Spill n -> push_node (IStore (Rtl.AddrStack (-4 * n), r, dest)))
     dest args regs
   in
 

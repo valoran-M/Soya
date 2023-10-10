@@ -20,7 +20,6 @@ type operation =
   | OLt
 
 type condition =
-  | CImm of int
   | CEqi of int | CNeqi of int
   | CEq | CNeq
   | CLt | CGe

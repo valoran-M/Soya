@@ -40,4 +40,4 @@ _opam/
 *.png
 *.dot
 *.lin
-
+*.asm

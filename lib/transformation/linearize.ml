@@ -5,7 +5,6 @@ open Ltl
 let tr_function (fdef : Ltl.function_def) =
   let negate_condition (c: Rtl.condition) =
     match c with
-    | Rtl.CImm i -> if i = 0 then Rtl.CImm 1 else Rtl.CImm 0
     | Rtl.CEqi n -> Rtl.CNeqi n
     | Rtl.CNeqi n -> Rtl.CEqi n
     | Rtl.CEq -> Rtl.CNeq

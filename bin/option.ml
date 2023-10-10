@@ -12,6 +12,8 @@ let debug_rtl = ref false
 let debug_ltl = ref false
 let debug_lin = ref false
 
+let debug_list = [debug_imp; debug_rtl; debug_ltl; debug_lin]
+
 let spec = [
   ("-Imp ", Arg.Unit (fun () -> lang_compile := Imp), "Imp language compiler");
   
@@ -19,6 +21,8 @@ let spec = [
   ("-drtl", Arg.Set debug_rtl, "Save generated RTL");
   ("-dltl", Arg.Set debug_ltl, "Save generated LTL");
   ("-dlin", Arg.Set debug_lin, "Save generated Lin");
+  ("-dall", Arg.Unit (fun () -> List.iter (fun r -> r := true) debug_list),
+            "Save alle debug");
 
   ("-o", Arg.Set_string output_file , "Name of output file");
 ]

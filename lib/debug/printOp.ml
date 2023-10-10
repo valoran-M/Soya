@@ -9,12 +9,11 @@ let print_addr ppf addr =
 
 let print_cond print_reg ppf args =
   match args with
-  | CImm  n,  []   -> fprintf ppf "%d" n
   | CEqi  n,  [r1] -> fprintf ppf "%a == %n" print_reg r1 n
   | CNeqi n,  [r1] -> fprintf ppf "%a != %n" print_reg r1 n
   | CEq,  [r1; r2] -> fprintf ppf "%a == %a" print_reg r1 print_reg r2
   | CNeq, [r1; r2] -> fprintf ppf "%a != %a" print_reg r1 print_reg r2
-  | CLt,  [r1; r2] -> fprintf ppf "%a <= %a" print_reg r1 print_reg r2
+  | CLt,  [r1; r2] -> fprintf ppf "%a < %a" print_reg r1 print_reg r2
   | _ -> assert false
 
 let print_op print_reg ppf args =
@@ -22,6 +21,6 @@ let print_op print_reg ppf args =
   | OConst n, []       -> fprintf ppf "%d" n
   | OAdd,     [r1; r2] -> fprintf ppf "%a + %a" print_reg r1 print_reg r2
   | OMul,     [r1; r2] -> fprintf ppf "%a * %a" print_reg r1 print_reg r2
-  | OLt,      [r1; r2] -> fprintf ppf "%a <= %a" print_reg r1 print_reg r2
+  | OLt,      [r1; r2] -> fprintf ppf "%a < %a" print_reg r1 print_reg r2
   | _, _ -> assert false
 

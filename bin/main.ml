@@ -1,3 +1,5 @@
+open Format
+
 let imp_to_rtl imp =
   let rtl = Translate.Imp2rtl.tr_program imp in
   if !Option.debug_rtl
@@ -35,6 +37,15 @@ let () =
   in
   let rtl = call_convention rtl in
   let ltl = rtl_to_ltl rtl in
-  let _lin = lin_ltl ltl in
-  ()
+  let lin = lin_ltl ltl in
+  let asm = Translate.Asmgen.gen_prog lin in
+
+  let file = Filename.remove_extension !Option.output_file ^ ".asm" in
+  let out = open_out file in
+  let outf = formatter_of_out_channel out in
+  Lang.Mips.print_program outf asm;
+  pp_print_flush outf ();
+  close_out out;
+  exit 0
+
 
