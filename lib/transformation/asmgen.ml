@@ -1,5 +1,6 @@
 open Lang
 open Lang.Mips
+open Lang.Op
 
 let push reg =
   subi sp sp 4
@@ -24,33 +25,33 @@ let tr_function (fdef : Linear.function_def) =
 
   let tr_op op args r =
     match op with
-    | Rtl.OConst n -> li r n
-    | Rtl.OAdd -> let r1, r2 = two_args args in add r r1 r2
-    | Rtl.OMul -> let r1, r2 = two_args args in mul r r1 r2
-    | Rtl.OLt  -> let r1, r2 = two_args args in slt r r1 r2
+    | OConst n -> li r n
+    | OAdd     -> let r1, r2 = two_args args in add r r1 r2
+    | OMul     -> let r1, r2 = two_args args in mul r r1 r2
+    | OLt      -> let r1, r2 = two_args args in slt r r1 r2
   in
   
   let tr_cond c args l =
     match c with
-    | Rtl.CEqi i  -> let r = one_arg args in beqi r i l
-    | Rtl.CNeqi i -> let r = one_arg args in bnei r i l
-    | Rtl.CEq   -> let r1, r2 = two_args args in beq  r1 r2 l
-    | Rtl.CNeq  -> let r1, r2 = two_args args in bne r1 r2 l
-    | Rtl.CLt   -> let r1, r2 = two_args args in blt r1 r2 l
-    | Rtl.CGe   -> let r1, r2 = two_args args in bge r1 r2 l
+    | CEqi i  -> let r = one_arg args in beqi r i l
+    | CNeqi i -> let r = one_arg args in bnei r i l
+    | CEq     -> let r1, r2 = two_args args in beq  r1 r2 l
+    | CNeq    -> let r1, r2 = two_args args in bne r1 r2 l
+    | CLt     -> let r1, r2 = two_args args in blt r1 r2 l
+    | CGe     -> let r1, r2 = two_args args in bge r1 r2 l
   in
 
   let tr_load a r =
     match a with
-    | Rtl.Addr l      -> la r l @@ lw r 0 r
-    | Rtl.AddrGlobl l -> la r l @@ lw r 0 r
-    | Rtl.AddrStack i -> lw r i sp
+    | Addr l      -> la r l @@ lw r 0 r
+    | AddrGlobl l -> la r l @@ lw r 0 r
+    | AddrStack i -> lw r i sp
   in
   let tr_store a r =
     match a with
-    | Rtl.Addr l      -> la t9 l @@ sw r 0 t9
-    | Rtl.AddrGlobl l -> la t9 l @@ sw r 0 t9
-    | Rtl.AddrStack i -> sw r i sp
+    | Addr l      -> la t9 l @@ sw r 0 t9
+    | AddrGlobl l -> la t9 l @@ sw r 0 t9
+    | AddrStack i -> sw r i sp
   in
 
   let tr_instruction (i: Linear.instruction) =

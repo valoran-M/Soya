@@ -1,5 +1,6 @@
 open Lang.Imp
 open Lang.Rtl
+open Lang.Op
 
 let tr_function (fdef : Lang.Imp.function_def) =
   (* RTL code *)

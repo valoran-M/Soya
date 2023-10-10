@@ -1,16 +1,17 @@
 open Lang
+open Lang.Op
 open Linear
 open Ltl
 
 let tr_function (fdef : Ltl.function_def) =
-  let negate_condition (c: Rtl.condition) =
+  let negate_condition (c: condition) =
     match c with
-    | Rtl.CEqi n -> Rtl.CNeqi n
-    | Rtl.CNeqi n -> Rtl.CEqi n
-    | Rtl.CEq -> Rtl.CNeq
-    | Rtl.CNeq -> Rtl.CEq
-    | Rtl.CLt -> Rtl.CGe
-    | Rtl.CGe -> Rtl.CLt
+    | CEqi n  -> CNeqi n
+    | CNeqi n -> CEqi n
+    | CEq     -> CNeq
+    | CNeq    -> CEq
+    | CLt     -> CGe
+    | CGe     -> CLt
   in
   let id_to_label   = Hashtbl.create 32 in
   let label_is_used = Hashtbl.create 8  in

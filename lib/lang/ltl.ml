@@ -1,10 +1,8 @@
-open Rtl
+open Op
 
 type node  = int
 
 type reg = Mips.register
-
-type ident = string
 
 type instruction =
   | IPutchar of reg * node

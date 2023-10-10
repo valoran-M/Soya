@@ -1,5 +1,5 @@
 open Format
-open Lang.Rtl
+open Lang.Op
 
 let print_addr ppf addr =
   match addr with

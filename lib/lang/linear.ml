@@ -1,4 +1,5 @@
-type ident = string
+open Op
+
 type label = string
 type reg = Mips.register
 
@@ -6,11 +7,11 @@ type instruction =
   | LLabel    of label
   | LPutchar  of reg
   | LMove     of reg * reg
-  | LLoad     of Rtl.address * reg
-  | LStore    of Rtl.address * reg
+  | LLoad     of address * reg
+  | LStore    of address * reg
   | LPush     of reg
-  | LOp       of Rtl.operation * reg list * reg
-  | LCond     of Rtl.condition * reg list *  label
+  | LOp       of operation * reg list * reg
+  | LCond     of condition * reg list *  label
   | LCall     of ident
   | LGoto     of label
   | LReturn
