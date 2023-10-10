@@ -16,6 +16,12 @@ let rtl_to_ltl rtl =
   then Debug.PrintLTL.print_ltl ltl !Option.output_file ".ltl0";
   ltl
 
+let lin_ltl ltl =
+  let line = Translate.Linearize.linearize ltl in
+  if !Option.debug_lin
+  then Debug.PrintLinear.print_lin line !Option.output_file ".lin";
+  line
+
 let () =
   Option.parse_args ();
   let c = open_in !Option.input_file in
@@ -28,6 +34,7 @@ let () =
       imp_to_rtl prog
   in
   let rtl = call_convention rtl in
-  let _ltl = rtl_to_ltl rtl in
+  let ltl = rtl_to_ltl rtl in
+  let _lin = lin_ltl ltl in
   ()
 

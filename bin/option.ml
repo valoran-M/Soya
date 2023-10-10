@@ -10,13 +10,15 @@ let lang_compile = ref Imp
 let debug_imp = ref false
 let debug_rtl = ref false
 let debug_ltl = ref false
+let debug_lin = ref false
 
 let spec = [
   ("-Imp ", Arg.Unit (fun () -> lang_compile := Imp), "Imp language compiler");
   
   ("-dimp", Arg.Set debug_imp, "Save generated Imp");
   ("-drtl", Arg.Set debug_rtl, "Save generated RTL");
-  ("-dltl", Arg.Set debug_ltl, "Save generated RTL");
+  ("-dltl", Arg.Set debug_ltl, "Save generated LTL");
+  ("-dlin", Arg.Set debug_lin, "Save generated Lin");
 
   ("-o", Arg.Set_string output_file , "Name of output file");
 ]

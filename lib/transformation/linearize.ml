@@ -32,18 +32,15 @@ let tr_function (fdef : Ltl.function_def) =
                  LGoto l :: code
   and instr l code =
     match (Hashtbl.find fdef.code l) with
-    | IOp (op, args, r, n)-> lin n (LOp (op, args, r) :: code)
-    | IPutchar (r, n)     -> lin n (LPutchar r :: code)
-    | IMove (r1, r2, n)   -> lin n (LMove (r1, r2) :: code)
-    | ILoad (a, r, n)     -> lin n (LLoad (a, r) :: code)
-    | IStore (a, r, n)    -> lin n (LStore (a, r) :: code)
-    | IPush (r, n)        -> lin n (LPush r :: code)
-    | ICall (i, _, n)     -> lin n (LCall i :: code)
+    | IOp (op, args, r, n)-> (LOp (op, args, r)) :: lin n code
+    | IPutchar (r, n)     -> LPutchar r :: lin n code
+    | IMove (r1, r2, n)   -> LMove (r1, r2) :: lin n code
+    | ILoad (a, r, n)     -> LLoad (a, r) :: lin n code
+    | IStore (a, r, n)    -> LStore (a, r) :: lin n code
+    | IPush (r, n)        -> LPush r :: lin n code
+    | ICall (i, _, n)     -> LCall i :: lin n code
     | IReturn _           -> (LReturn :: code)
-    | IGoto n             ->
-      (match Hashtbl.find_opt id_to_label n with
-      | Some l -> LGoto l :: code
-      | None -> lin n code)
+    | IGoto n             -> lin n code
     | ICond (c, lr, nt, nf) ->
       let lt = Hashtbl.find_opt id_to_label nt in
       let lf = Hashtbl.find_opt id_to_label nf in
@@ -53,14 +50,32 @@ let tr_function (fdef : Ltl.function_def) =
       | Some lt, None    -> LCond (c, lr, lt) :: lin nf code
       | None,    Some lf -> Hashtbl.replace label_is_used lf ();
                             LCond (negate_condition c, lr, lf) :: lin nt code
-      | None,    None    -> let code = lin nt code @ lin nf code in
-                            LCond (c, lr, Hashtbl.find id_to_label nt) :: code
+      | None,    None    ->
+        let codet = lin nt code in
+        let codef = lin nf code in
+        let code = codef @ codet in
+        let lt = Hashtbl.find id_to_label nt in
+        Hashtbl.replace label_is_used lt ();
+        LCond (c, lr, Hashtbl.find id_to_label nt) :: code
   in
 
+  let rec remove_usless_label code =
+    match code with
+    | [] -> []
+    | LLabel l :: c ->
+      if Hashtbl.mem label_is_used l
+      then LLabel l :: remove_usless_label c
+      else remove_usless_label c
+    | i :: c -> i :: remove_usless_label c
+  in
   {
     stack_size = fdef.stack_size;
     name = fdef.name;
-    code = lin fdef.entry [];
+    code = remove_usless_label (lin fdef.entry []);
   }
 
-
+let linearize prog : Linear.program =
+  {
+    globals   = prog.globals;
+    functions = List.map (fun f -> tr_function f) prog.functions;
+  }
