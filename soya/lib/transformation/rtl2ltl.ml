@@ -101,7 +101,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     List.fold_left2 (fun dest pr r ->
       match get_reg pr with
       | Reg _   -> dest
-      | Spill n -> push_node (IStore (AddrStack (-4 * n), r, dest)))
+      | Spill n -> push_node (ILoad (AddrStack (-4 * n), r, dest)))
     dest args regs
   and tr_op op args r dest =
     let regs = fst (List.fold_right (fun r (a, t) -> 
@@ -119,7 +119,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     List.fold_left2 (fun dest pr r ->
       match get_reg pr with
       | Reg _   -> dest
-      | Spill n -> push_node (IStore (AddrStack (-4 * n), r, dest)))
+      | Spill n -> push_node (ILoad (AddrStack (-4 * n), r, dest)))
     dest args regs
   in
 

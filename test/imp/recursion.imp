@@ -3,7 +3,7 @@ function main() {
 }
 
 function x(y) {
-  while (y < 10){
+  while (y < 10) {
     return y + x(y+1);
   }
   return 12;
