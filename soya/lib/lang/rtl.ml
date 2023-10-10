@@ -10,18 +10,18 @@ type pseudo_reg =
   | Real of Mips.register
 
 type 'reg instruction =
-  | INop     of node
-  | IPutchar of 'reg * node
-  | IMove    of 'reg * 'reg * node
-  | IOp      of operation * 'reg list * 'reg * node
-  | ILoad    of address * 'reg * node
-  | IStore   of address * 'reg * node
-  | IPush    of 'reg * node
-  | IPop     of 'reg * node
-  | ICall    of ident * 'reg list * int * 'reg option * node
-  | ICond    of condition * 'reg list * node * node
-  | IReturn  of 'reg option
-  | IGoto    of node
+  | INop      of node
+  | IPutchar  of 'reg * node
+  | IMove     of 'reg * 'reg * node
+  | IOp       of operation * 'reg list * 'reg * node
+  | ILoad     of address * 'reg * node
+  | IStore    of address * 'reg * node
+  | ISetParam of 'reg * int * int * node
+  | IGetParam of 'reg * int * int * node
+  | ICall     of ident * 'reg list * int * 'reg option * node
+  | ICond     of condition * 'reg list * node * node
+  | IReturn   of 'reg option
+  | IGoto     of node
 
 type 'reg code = (node, 'reg instruction) Hashtbl.t
 
@@ -31,6 +31,7 @@ type 'reg function_def = {
     params     : 'reg list;
     code       : 'reg code;
     entry      : node;
+    max_pushed_args : int;
   }
 
 type 'reg program = {

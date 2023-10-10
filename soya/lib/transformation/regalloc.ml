@@ -69,14 +69,22 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] (args);
         init id n
-      | IPop  (rd, n)
       | ILoad (_, rd, n) ->
         incr_reg rd;
         add_succ id n;
         add_def_use id [rd] [];
         init id n
-      | IPush (r, n)
       | IStore (_, r, n) ->
+        incr_reg r;
+        add_succ id n;
+        add_def_use id [] [r];
+        init id n
+      | IGetParam (r, _, _, n) ->
+        incr_reg r;
+        add_succ id n;
+        add_def_use id [r] [];
+        init id n
+      | ISetParam (r, _, _, n) ->
         incr_reg r;
         add_succ id n;
         add_def_use id [] [r];

@@ -65,17 +65,11 @@ let tr_function (fdef : Linear.function_def) =
       (if fdef.stack_size <> 0
       then addi sp sp fdef.stack_size
       else nop)
-      @@ addi sp fp (-4)
-      @@ pop ra
-      @@ pop fp
       @@ jr ra
   in
   let code =
     List.fold_left (fun code i -> code @@ tr_instruction i) nop fdef.code
   in
-  push fp
-  @@ push ra
-  @@ addi fp sp 4 @@
   (if fdef.stack_size <> 0
   then subi sp sp fdef.stack_size
   else nop)

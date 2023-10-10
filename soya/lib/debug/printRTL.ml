@@ -50,11 +50,11 @@ let print_function ppf f print_reg =
       | IStore (addr, rd, n) ->
         fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
         print_instruction ppf n;
-      | IPop (rd, n) ->
-        fprintf ppf "pop %a\n" print_reg rd;
+      | IGetParam (r, i, _, n) ->
+        fprintf ppf "%a <- get_param %d\n" print_reg r i;
         print_instruction ppf n;
-      | IPush (rd, n) ->
-        fprintf ppf "push %a\n" print_reg rd;
+      | ISetParam (r, i, _, n) ->
+        fprintf ppf "%a -> set_param %d\n" print_reg r i;
         print_instruction ppf n;
       | ICall (fun_id, args, _, _, n) ->
         fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;

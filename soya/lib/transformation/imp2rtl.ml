@@ -120,6 +120,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
     params;
     code;
     entry;
+    max_pushed_args = 0;
   }
 
 let tr_program (prog : Lang.Imp.program) : pseudo Lang.Rtl.program =

@@ -56,16 +56,20 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
   in
 
   let set_args dest =
+    let pushed_args = max 0 (List.length fdef.params - 4) in
     fst (List.fold_left (fun (dest, i) r ->
       if i < 4
       then push_node (IMove (reg r, nb_args_to_reg i, dest)), i+1
-      else (dest, i+1))
+      else push_node (IGetParam (reg r, (i - 3), pushed_args, dest)), i+1)
       (dest, 0) fdef.params
     )
   in
 
+  let max_pushed_args = ref 0 in
   let tr_call id args dest r =
     let nb_args = List.length args in
+    let pushed_args = max 0 (nb_args - 4) in
+    max_pushed_args := max !max_pushed_args pushed_args;
     let dest =
       match r with
       | None -> dest
@@ -74,7 +78,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     let dest = push_node (ICall (id, [], nb_args, None, dest)) in
     fst (List.fold_left (fun (dest, i) r ->
       if i < 4 then (push_node (IMove(nb_args_to_reg i, reg r, dest)),i+1)
-               else (push_node (IPush(reg r, dest)),i+1)
+               else (push_node (ISetParam(reg r, i - 3, pushed_args, dest)),i+1)
       ) (dest, 0) args)
   in
 
@@ -92,8 +96,6 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
       | ILoad(a,r,n)     -> push_node (ILoad (a, reg r, tr_instruction n))
       | IStore(a,r,n)    -> push_node (IStore(a, reg r, tr_instruction n))
-      | IPush(a,n)       -> push_node (IPush(reg a, tr_instruction n))
-      | IPop(a,n)        -> push_node (IPop(reg a, tr_instruction n))
       | ICall(id,lr,_,r,n)-> tr_call id lr (tr_instruction n) r
       | ICond(c,lr,nt,nf) ->
         push_node
@@ -103,10 +105,11 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
       | IReturn (Some r) ->
-        let dest = push_node (IReturn None) in
-        let dest = push_node (IMove (Real v0, reg r, dest)) in
+        let dest = push_node (IMove (Real v0, reg r, push_node
+                             (IReturn None))) in
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
+      | _ -> assert false
       in
       let node = Hashtbl.find code bid in
       Hashtbl.remove code bid;
@@ -121,6 +124,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     params = [];
     code;
     entry;
+    max_pushed_args = !max_pushed_args;
   }
 
 let tr_program (prog : pseudo Lang.Rtl.program) : pseudo_reg Lang.Rtl.program =
