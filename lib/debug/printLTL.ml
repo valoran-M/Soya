@@ -35,9 +35,6 @@ let print_function ppf f print_reg =
       | IStore (addr, rd, n) ->
         fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
         print_instruction ppf n
-      | IPop (rd, n) ->
-        fprintf ppf "pop %a\n" print_reg rd;
-        print_instruction ppf n
       | IPush (rd, n) ->
         fprintf ppf "push %a\n" print_reg rd;
         print_instruction ppf n

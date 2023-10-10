@@ -5,7 +5,7 @@ type reg = Reg of Lang.Mips.register | Spill of int
 
 let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
   let code = Hashtbl.create 16 in
-  let color = Regalloc.graph_coloring def in
+  let color, nb_spilled = Regalloc.graph_coloring def in
   
   let id_env = Hashtbl.create 32 in
 
@@ -45,7 +45,6 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
         | ILoad  (a,r,n)     -> tr_load a r (tr_instruction n)
         | IStore (a,r,n)     -> tr_store a r (tr_instruction n)
         | IPush (r,n)        -> tr_push r (tr_instruction n)
-        | IPop (r,n)         -> tr_pop r (tr_instruction n)
         | ICall (id,_,i,n)   -> push_node (ICall (id, i, (tr_instruction n)))
         | ICond (c,lr,nt,nf) -> tr_cond c lr (tr_instruction nt)
                                              (tr_instruction nf)
@@ -71,11 +70,6 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     | Reg r   -> push_node (IPush (r, dest))
     | Spill n -> push_node (ILoad (Rtl.AddrStack n, Mips.t8, push_node
                            (IPush (Mips.t8, dest)))))
-  and tr_pop r dest =
-    (match get_reg r with
-    | Reg r   -> push_node (IPop (r, dest))
-    | Spill n -> push_node (IPop (Mips.t8, push_node
-                           (IStore (Rtl.AddrStack n, Mips.t8, dest)))))
   and tr_putchar r dest=
     (match get_reg r with
     | Reg r   -> push_node (IPutchar (r, dest))
@@ -130,6 +124,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
 
   let entry = tr_instruction def.entry in
   {
+    stack_size = nb_spilled * 4;
     name = def.name;
     code;
     entry

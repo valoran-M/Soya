@@ -13,7 +13,6 @@ type instruction =
   | ILoad    of address * reg * node
   | IStore   of address * reg * node
   | IPush    of reg * node
-  | IPop     of reg * node
   | ICall    of ident * int * node
   | ICond    of condition * reg list * node * node
   | IReturn  of reg option
@@ -22,6 +21,7 @@ type instruction =
 type code = (node, instruction) Hashtbl.t
 
 type function_def = {
+    stack_size : int;
     name       : string;
     code       : code;
     entry      : node;

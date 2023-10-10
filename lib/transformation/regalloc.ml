@@ -168,9 +168,9 @@ let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
 
+  let nb_spill = ref (-1) in
   let new_spill =
-    let spill = ref (-1) in
-    fun () -> incr spill; !spill
+    fun () -> incr nb_spill; !nb_spill
   in
 
   let get_color n =
@@ -230,5 +230,5 @@ let graph_coloring (f: pseudo_reg function_def) =
   in
 
   simplify ();
-  color
+  color, !nb_spill + 1
 

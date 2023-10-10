@@ -23,7 +23,7 @@ type condition =
   | CImm of int
   | CEqi of int | CNeqi of int
   | CEq | CNeq
-  | CLt
+  | CLt | CGe
 
 type 'reg instruction =
   | INop     of node
