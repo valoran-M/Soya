@@ -12,7 +12,8 @@ let debug_rtl = ref false
 let debug_ltl = ref false
 let debug_lin = ref false
 
-let debug_list = [debug_imp; debug_rtl; debug_ltl; debug_lin]
+let debug_list = [debug_imp; debug_rtl; debug_ltl; debug_lin;
+                  Translate.Regalloc.debug]
 
 let spec = [
   ("-Imp ", Arg.Unit (fun () -> lang_compile := Imp), "Imp language compiler");
@@ -20,6 +21,7 @@ let spec = [
   ("-dimp", Arg.Set debug_imp, "Save generated Imp");
   ("-drtl", Arg.Set debug_rtl, "Save generated RTL");
   ("-dltl", Arg.Set debug_ltl, "Save generated LTL");
+  ("-dreg", Arg.Set Translate.Regalloc.debug, "Save generated LTL");
   ("-dlin", Arg.Set debug_lin, "Save generated Lin");
   ("-dall", Arg.Unit (fun () -> List.iter (fun r -> r := true) debug_list),
             "Save alle debug");
@@ -35,5 +37,6 @@ let parse_args () =
   if not (Sys.file_exists !input_file)
   then raise (Arg.Bad "Input file does not exists");
   if !output_file = ""
-  then output_file := Filename.remove_extension !input_file ^ ".asm"
+  then output_file := Filename.remove_extension !input_file ^ ".asm";
+  Translate.Regalloc.file := Filename.remove_extension !output_file ^ ".alloc"
  

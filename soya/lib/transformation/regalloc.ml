@@ -2,8 +2,17 @@ open Utils
 open Lang.Rtl
 open Lang.Mips
 
+let debug = ref false
+let file = ref ""
+
+let reg reg =
+  match reg with
+  | Pseu r -> Printf.sprintf "x%d" r
+  | Real s -> Printf.sprintf "%s" s
+
+
 module Reg_set = Set.Make(
-  struct 
+  struct
     type t = pseudo_reg
     let compare t1 t2 =
       match (t1, t2) with
@@ -67,7 +76,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
       | IOp (_, args, rd, n) ->
         incr_reg rd; List.iter incr_reg args;
         add_succ id n;
-        add_def_use id [rd] (args);
+        add_def_use id [rd] args;
         init id n
       | ILoad (_, rd, n) ->
         incr_reg rd;
@@ -93,7 +102,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         let nb_args = List.length args in
         List.iter incr_reg args;
         add_succ id n;
-        add_def_use id Regs.caller_saved
+        add_def_use id (Real ra :: Regs.caller_saved)
           (Real v0 :: Util.get_k_first (min 4 nb_args)
             [Real a0; Real a1; Real a2; Real a3]);
         init id n
@@ -105,7 +114,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         init id nf
       | IReturn (Some r) ->
         incr_reg r;
-        add_def_use id [] ((Real v0) :: Regs.callee_saved)
+        add_def_use id [] (Real v0 :: Regs.callee_saved)
       | IReturn None ->
         add_def_use id [] Regs.callee_saved
       | IGoto n ->
@@ -145,9 +154,15 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         List.iter (fun id -> Queue.add id file) pred;
       liveness_assgn ()
   in
-
   init (-1) rtl_fun.entry;
   liveness_assgn ();
+  Hashtbl.iter (fun i (in_, out) -> 
+    Printf.printf "%d : " i;
+    Reg_set.iter (fun r -> Printf.printf "%s " (reg r)) in_;
+    Printf.printf "\\ ";
+    Reg_set.iter (fun r -> Printf.printf "%s " (reg r)) out;
+    print_newline ()
+  ) in_out;
   def_use, in_out, reg_nb_use
 
 (* Interference Graph ------------------------------------------------------- *)
@@ -179,6 +194,13 @@ let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
 
+  if f.name = "main" then
+  Debug.PrintGraph.print_graph graph "test" ".dot";
+
+  let ppf = Debug.PrintRegAlloc.gen_ppf !debug !file f.name in
+
+  Printf.printf "- %s\n" f.name;
+
   let nb_spill = ref (-1) in
   let new_spill =
     fun () -> incr nb_spill; !nb_spill
@@ -202,9 +224,10 @@ let graph_coloring (f: pseudo_reg function_def) =
     | r :: _ -> Some r
   in
 
+  let open Debug.PrintRegAlloc in
   let rec simplify () =
     match Interference_graph.find_min_without_pref k graph with
-    | Some (v, _) -> select v
+    | Some (v, _) -> simplify_select ppf v; select v
     | None        -> coalesce ()
 
   and coalesce () =
@@ -212,6 +235,10 @@ let graph_coloring (f: pseudo_reg function_def) =
     | None -> freeze ()
     | Some (v1, v2) ->
       let v, rv = Interference_graph.merge v1 v2 graph in
+      simplify_coalesce ppf v rv;
+      let nbr = try Hashtbl.find reg_nb_use rv with _ -> 0 in
+      let nbv = try Hashtbl.find reg_nb_use v  with _ -> 0 in
+      Hashtbl.replace reg_nb_use v (nbr + nbv);
       simplify ();
       match v with
       | Real r -> Hashtbl.replace color rv (Reg r)
@@ -219,27 +246,30 @@ let graph_coloring (f: pseudo_reg function_def) =
 
   and freeze () =
     match Interference_graph.find_min k graph with
-    | Some (v, _) -> Interference_graph.remove_pref_edge v graph; simplify ()
     | None        -> spill ()
+    | Some (v, _) ->
+      remove_pref ppf v;
+      Interference_graph.remove_pref_edge v graph;
+      simplify ()
 
   and spill () =
     if not (Interference_graph.is_empty graph) then
       match Interference_graph.get_min reg_nb_use graph with
       | None -> ()
-      | Some r -> select r
+      | Some r -> spill_reg ppf r; select r
 
   and select v =
     let nv = List.of_seq (Hashtbl.to_seq (Hashtbl.find graph v)) in
     Interference_graph.remove v graph;
     simplify ();
-    match v with
-    | Real r -> Hashtbl.replace color v (Reg r)
-    | _ ->
-      match get_color nv with
-      | Some c -> Hashtbl.replace color v (Reg c)
-      | None   -> Hashtbl.replace color v (Spill (new_spill ()))
+    match get_color nv with
+    | Some c -> select_reg ppf v c; Hashtbl.replace color v (Reg c)
+    | None   -> spilled_reg ppf v; Hashtbl.replace color v (Spill (new_spill ()))
   in
 
   simplify ();
+  (match ppf with
+  | Some (ppf, f) -> Format.pp_print_flush ppf (); close_out f
+  | None -> ());
   color, !nb_spill + 1
 

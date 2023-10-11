@@ -66,5 +66,7 @@ let print_ltl (prog : program) file ext =
   let out = open_out file in
   let outf = formatter_of_out_channel out in
   print_global outf prog.globals;
-  print_prog outf prog.functions print_reg
+  print_prog outf prog.functions print_reg;
+  pp_print_flush outf ();
+  close_out out;
 

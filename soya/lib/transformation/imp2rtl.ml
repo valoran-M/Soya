@@ -31,37 +31,42 @@ let tr_function (fdef : Lang.Imp.function_def) =
 
   (* Translate ---------------------------------------------------------------*)
 
-  let rec tr_expression exp (reg : pseudo) dest =
-    match exp with
-    | Cst  n -> push_node (IOp ((OConst n), [], reg, dest))
-    | Bool b -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
-    | Var  v ->
+  let rec tr_expression exp (reg : pseudo option) dest =
+    match exp, reg with
+    | Cst  n, Some reg -> push_node (IOp ((OConst n), [], reg, dest))
+    | Bool b, Some reg -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
+    | Var  v, Some reg ->
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
       | None    -> push_node (ILoad (AddrGlobl v, reg, dest)))
-    | Binop (op, e1, e2) -> tr_binop op e1 e2 reg dest
-    | Call (s, le) ->
+    | Binop (op, e1, e2), _ -> tr_binop op e1 e2 reg dest
+    | Call (s, le), _ ->
       let id_call = new_node () in
       let args, entry, _ =
         List.fold_right (fun exp (lr, dest, nb_arg) -> 
           let reg =  new_reg () in
-          let id_node = tr_expression exp reg dest in
+          let id_node = tr_expression exp (Some reg) dest in
           (reg :: lr, id_node, nb_arg - 1))
         le ([], id_call, List.length le - 1)
       in
       Hashtbl.replace code id_call
-        (ICall (s, args, List.length args, Some reg, dest));
+        (ICall (s, args, List.length args, reg, dest));
       entry
+    | _ -> dest
   and tr_binop (op : binop) e1 e2 reg dest =
-    let op =
-      match op with
-      | Add -> OAdd | Mul -> OMul
-      | Lt  -> OLt
-    in
-    let r2 = new_reg () in
-    let id_op = push_node (IOp (op, [reg; r2], reg, dest)) in
-    let n2 = tr_expression e2 r2 id_op in
-    tr_expression e1 reg n2
+    match reg with
+    | None -> tr_expression e1 None (tr_expression e2 None dest)
+    | Some reg ->
+      let op =
+        match op with
+        | Add -> OAdd | Mul -> OMul
+        | Lt  -> OLt
+      in
+      let r1 = new_reg () in
+      let r2 = new_reg () in
+      let id_op = push_node (IOp (op, [r1; r2], reg, dest)) in
+      let n2 = tr_expression e2 (Some r2) id_op in
+      tr_expression e1 (Some r1) n2
   in
 
   let tr_condition (cond : Lang.Imp.expression) destT destF =
@@ -70,12 +75,12 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let r1 = new_reg () in
       let r2 = new_reg () in
       let id_cond = push_node (ICond(CLt, [r1; r2], destT, destF)) in
-      let id2 = tr_expression e2 r2 id_cond in
-      tr_expression e1 r1 id2
+      let id2 = tr_expression e2 (Some r2) id_cond in
+      tr_expression e1 (Some r1) id2
     | _ ->
       let r = new_reg () in
       let id_node = push_node (ICond (CEqi 1, [r], destT, destF)) in
-      tr_expression cond r id_node
+      tr_expression cond (Some r) id_node
   in
 
   let rec tr_instruction (inst : Lang.Imp.instruction) dest =
@@ -83,14 +88,14 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Putchar e ->
       let reg = new_reg () in
       let id_put = push_node (IPutchar (reg, dest)) in
-      tr_expression e reg id_put
+      tr_expression e (Some reg) id_put
     | Set (id, e) ->
         (match Hashtbl.find_opt env id with
-        | Some reg -> tr_expression e reg dest
+        | Some reg -> tr_expression e (Some reg) dest
         | None ->
           let reg = new_reg () in
           let id_store = push_node (IStore ((AddrGlobl id), reg, dest)) in
-          tr_expression e reg id_store)
+          tr_expression e (Some reg) id_store)
     | If (c, e1, e2) ->
       let node_T = tr_sequence e1 dest in
       let node_F = tr_sequence e2 dest in
@@ -103,10 +108,9 @@ let tr_function (fdef : Lang.Imp.function_def) =
       id_cond
     | Return e ->
       let reg = new_reg () in
-      tr_expression e reg (push_node (IReturn (Some reg)))
+      tr_expression e (Some reg) (push_node (IReturn (Some reg)))
     | Expr e ->
-      let reg = new_reg () in
-      tr_expression e reg dest
+      tr_expression e None dest
   and tr_sequence seq entry =
     List.fold_right (fun inst entry ->
       tr_instruction inst entry

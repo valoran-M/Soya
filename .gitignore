@@ -41,3 +41,4 @@ _opam/
 *.dot
 *.lin
 *.asm
+*.alloc

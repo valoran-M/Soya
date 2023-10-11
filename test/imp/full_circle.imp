@@ -1,0 +1,50 @@
+var retour;
+var espace;
+var ar;
+
+function main(arg) {
+  var i;
+  i = 0;
+  retour = 10;
+  espace = 32;
+
+  i=arg;
+  while (-1 < i) {
+    affiche_ligne(i, arg);
+    putchar(retour);
+    i = i + -1;
+  }
+  i = 0;
+  while (i < arg+1) {
+    affiche_ligne(i, arg);
+    putchar(retour);
+    i = i + 1;
+  }
+}
+
+function affiche_ligne(i, n) {
+  var j;
+  var x;
+  j = n;
+  while (-1<j) {
+    if (i*i + j*j < n*n) {
+      putchar(46);
+    } else {
+      putchar(35);
+    }
+    putchar(espace);
+    j = j + -1;
+  }
+
+  j = 0;
+  while (j < n+1) {
+    if (i*i + j*j < n*n) {
+      putchar(46);
+    } else {
+      putchar(35);
+    }
+    putchar(espace);
+    j = j+1;
+  }
+}
+

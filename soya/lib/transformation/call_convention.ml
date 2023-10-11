@@ -51,8 +51,8 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
   in
 
   let pop_callee_save dest =
-    List.fold_right (fun r d -> push_node (IMove (r, Hashtbl.find env r, d)))
-      Regs.callee_saved dest
+    List.fold_left (fun d r -> push_node (IMove (r, Hashtbl.find env r, d)))
+      dest Regs.callee_saved
   in
 
   let set_args dest =

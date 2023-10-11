@@ -16,7 +16,7 @@ let print_graph a file ext =
   Hashtbl.iter (fun r1 neig -> 
     Hashtbl.iter (fun r2 p ->
       Hashtbl.replace e (r2, r1) ();
-      if not (Hashtbl.mem e (r1, r2)) then
+      (* if not (Hashtbl.mem e (r1, r2)) then *)
         fprintf outf "\t\"%a\" -- \"%a\" %s;\n"
       print_pseudo_reg r1 print_pseudo_reg r2
       (if p = Utils.Interference_graph.Preference
@@ -24,5 +24,7 @@ let print_graph a file ext =
       else "")
     ) neig
   ) a;
-  fprintf outf "}\n"
+  fprintf outf "}\n";
+  pp_print_flush outf ();
+  close_out out
 
