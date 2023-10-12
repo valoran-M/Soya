@@ -199,7 +199,7 @@ let graph_coloring (f: pseudo_reg function_def) =
   in
 
   let get_color n =
-    let l = List.fold_left (fun (p, acc) (id, e) ->
+    let p, c = List.fold_left (fun (p, acc) (id, e) ->
       match e, id with
       | Interference_graph.Preference, Real r -> (r :: p,  acc)
       | Interference_graph.Preference, _ -> (p, acc)
@@ -212,7 +212,8 @@ let graph_coloring (f: pseudo_reg function_def) =
           | Some (Reg r) ->
             p, List.filter (fun a -> a <> r) acc
     ) ([], Regs.register) n in
-    match l with
+    (* let p = List.filter (fun r -> List.mem r c) p in *)
+    match p, c with
     | r :: _, _   -> Some r
     | _, []       -> None
     | _, r :: _   -> Some r
