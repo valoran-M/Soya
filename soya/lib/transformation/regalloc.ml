@@ -188,9 +188,6 @@ let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
 
-  if f.name = "affiche_ligne" then
-  Debug.PrintGraph.print_graph graph "test" ".dot";
-
   let ppf = Debug.PrintRegAlloc.gen_ppf f.name ".alloc" in
 
   let nb_spill = ref (-1) in
