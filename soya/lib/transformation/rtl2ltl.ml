@@ -97,8 +97,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     | Spill n, Reg r2  ->
       push_node (IStore (spill_addr n, r2, dest))
     | Reg r,   Spill n ->
-      push_node (ILoad (spill_addr n, Mips.t8, push_node
-                (IMove (r, Mips.t8, dest))))
+      push_node (ILoad (spill_addr n, r, dest))
     | Spill n1, Spill n2 ->
       if n1 = n2 then dest
       else push_node (ILoad (spill_addr n2, Mips.t8, push_node

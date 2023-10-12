@@ -50,9 +50,9 @@ let tr_function (fdef : Linear.function_def) =
     match i with
     | Linear.LLabel l -> label l
     | Linear.LPutchar r ->
-       move a0 r
-       @@ li v0 11
-       @@ syscall
+      (if a0 <> r then move a0 r else nop)
+      @@ li v0 11
+      @@ syscall
     | Linear.LMove (rd, r) -> move rd r
     | Linear.LLoad (a, l) -> tr_load a l
     | Linear.LStore (a, l) -> tr_store a l

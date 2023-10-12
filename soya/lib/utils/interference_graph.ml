@@ -114,15 +114,15 @@ let get_min reg_nb_use graph =
   let aux r _ (min, nb_min) =
     match r, Hashtbl.find_opt reg_nb_use r with
     | Real _, _ | _, None -> (min, nb_min)
-    | _, Some nb ->
+    | Pseu _, Some nb ->
       match min with
-      | None -> (Some r, float_of_int nb /. float_of_int (degree r graph))
+      | None ->
+        (Some r, float_of_int nb /. float_of_int (degree r graph))
       | Some _ ->
         let heu = float_of_int nb /. float_of_int (degree r graph) in
         if heu < nb_min then Some r, heu else min, nb_min
   in
   fst (Hashtbl.fold aux graph (None, 0.))
-
 
 (* coalesce find *)
 let get_george_preference_edge k graph =
@@ -151,8 +151,8 @@ let get_george_preference_edge k graph =
     | None   ->
       Hashtbl.fold (fun v2 e acc ->
         match acc, e, v2 with
+        | _, _, Real _ when (List.mem v2 Regs.callee_saved) -> acc
         | _, Interfere, _
-        | _, _, Real _
         | Some _, _, _ -> acc
         | None  , Preference, _ ->
           if george v1 v2 then Some (v1, v2) else acc

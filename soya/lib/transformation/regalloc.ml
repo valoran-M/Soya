@@ -57,7 +57,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
       | IPutchar (r, n) ->
         incr_reg r;
         add_succ id n;
-        add_def_use id [Real a0] [r; Real a0];
+        add_def_use id [] [Real v0; Real a0];
         init id n
       | IMove (rd, r, n) ->
         incr_reg r;
@@ -188,7 +188,7 @@ let graph_coloring (f: pseudo_reg function_def) =
   let graph, reg_nb_use = interference_graph f in
   let color = Hashtbl.create 32 in
 
-  if f.name = "main" then
+  if f.name = "affiche_ligne" then
   Debug.PrintGraph.print_graph graph "test" ".dot";
 
   let ppf = Debug.PrintRegAlloc.gen_ppf f.name ".alloc" in
@@ -199,21 +199,23 @@ let graph_coloring (f: pseudo_reg function_def) =
   in
 
   let get_color n =
-    let l = List.fold_left (fun acc (id, e) ->
-      match e with
-      | Interference_graph.Preference -> acc
-      | Interference_graph.Interfere  ->
+    let l = List.fold_left (fun (p, acc) (id, e) ->
+      match e, id with
+      | Interference_graph.Preference, Real r -> (r :: p,  acc)
+      | Interference_graph.Preference, _ -> (p, acc)
+      | Interference_graph.Interfere, _  ->
         match id with
-        | Real r -> List.filter (fun a -> a <> r) acc
+        | Real r -> p, List.filter (fun a -> a <> r) acc
         | _ ->
           match Hashtbl.find_opt color id with
-          | None | Some (Spill _) -> acc
+          | None | Some (Spill _) -> (p, acc)
           | Some (Reg r) ->
-            List.filter (fun a -> a <> r) acc
-    ) Regs.register n in
+            p, List.filter (fun a -> a <> r) acc
+    ) ([], Regs.register) n in
     match l with
-    | []     -> None
-    | r :: _ -> Some r
+    | r :: _, _   -> Some r
+    | _, []       -> None
+    | _, r :: _   -> Some r
   in
 
   let open Debug.PrintRegAlloc in

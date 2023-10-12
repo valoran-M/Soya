@@ -1,3 +1,4 @@
+open Utils.Regs
 open Lang.Rtl
 open Lang.Mips
 
@@ -35,7 +36,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     id
   in
 
-  List.iter (fun r -> Hashtbl.replace env r (new_reg ())) Regs.callee_saved;
+  List.iter (fun r -> Hashtbl.replace env r (new_reg ())) callee_saved;
 
   (* Translate ---------------------------------------------------------------*)
 
@@ -47,12 +48,12 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
   let push_callee_save dest =
     List.fold_left (fun d r ->
       push_node (IMove (Hashtbl.find env r, r, d)))
-      dest Regs.callee_saved
+      dest callee_saved
   in
 
   let pop_callee_save dest =
     List.fold_left (fun d r -> push_node (IMove (r, Hashtbl.find env r, d)))
-      dest Regs.callee_saved
+      dest callee_saved
   in
 
   let set_args dest =
@@ -82,6 +83,11 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       ) (dest, 0) args)
   in
 
+  let tr_putchar r dest = 
+    push_node (IMove (Real a0, reg r,
+    push_node (IPutchar (Real a0, dest))))
+  in
+
   let rec tr_instruction i =
     match Hashtbl.find_opt id_env i with
     | Some i' -> i'
@@ -91,7 +97,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       let bid = match Hashtbl.find fdef.code i with
       | INop n           -> push_node (INop (tr_instruction n))
       | IGoto n          -> push_node (IGoto (tr_instruction n))
-      | IPutchar(r,n)    -> push_node (IPutchar (reg r, tr_instruction n))
+      | IPutchar(r,n)    -> tr_putchar r (tr_instruction n)
       | IMove(rd,r,n)    -> push_node (IMove (reg rd, reg r, tr_instruction n))
       | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
       | ILoad(a,r,n)     -> push_node (ILoad (a, reg r, tr_instruction n))
