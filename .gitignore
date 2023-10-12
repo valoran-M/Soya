@@ -42,3 +42,5 @@ _opam/
 *.lin
 *.asm
 *.alloc
+*.def_use
+*.liveness

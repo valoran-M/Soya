@@ -2,15 +2,6 @@ open Utils
 open Lang.Rtl
 open Lang.Mips
 
-let debug = ref false
-let file = ref ""
-
-let reg reg =
-  match reg with
-  | Pseu r -> Printf.sprintf "x%d" r
-  | Real s -> Printf.sprintf "%s" s
-
-
 module Reg_set = Set.Make(
   struct
     type t = pseudo_reg
@@ -69,7 +60,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_def_use id [Real a0] [r; Real a0];
         init id n
       | IMove (rd, r, n) ->
-        incr_reg r; incr_reg rd;
+        incr_reg r;
         add_succ id n;
         add_def_use id [rd] [r];
         init id n
@@ -156,13 +147,16 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
   in
   init (-1) rtl_fun.entry;
   liveness_assgn ();
-  Hashtbl.iter (fun i (in_, out) -> 
-    Printf.printf "%d : " i;
-    Reg_set.iter (fun r -> Printf.printf "%s " (reg r)) in_;
-    Printf.printf "\\ ";
-    Reg_set.iter (fun r -> Printf.printf "%s " (reg r)) out;
-    print_newline ()
-  ) in_out;
+  (* debug in_out *)
+  let ppf = Debug.PrintRegAlloc.gen_ppf rtl_fun.name ".liveness" in
+  Debug.PrintRegAlloc.print_liveness ppf in_out Reg_set.fold;
+  Debug.PrintRegAlloc.close_ppf ppf;
+
+  (* debug def_use *)
+  let ppf = Debug.PrintRegAlloc.gen_ppf rtl_fun.name ".def_use" in
+  Debug.PrintRegAlloc.print_liveness ppf def_use Reg_set.fold;
+  Debug.PrintRegAlloc.close_ppf ppf;
+
   def_use, in_out, reg_nb_use
 
 (* Interference Graph ------------------------------------------------------- *)
@@ -197,9 +191,7 @@ let graph_coloring (f: pseudo_reg function_def) =
   if f.name = "main" then
   Debug.PrintGraph.print_graph graph "test" ".dot";
 
-  let ppf = Debug.PrintRegAlloc.gen_ppf !debug !file f.name in
-
-  Printf.printf "- %s\n" f.name;
+  let ppf = Debug.PrintRegAlloc.gen_ppf f.name ".alloc" in
 
   let nb_spill = ref (-1) in
   let new_spill =
@@ -268,8 +260,6 @@ let graph_coloring (f: pseudo_reg function_def) =
   in
 
   simplify ();
-  (match ppf with
-  | Some (ppf, f) -> Format.pp_print_flush ppf (); close_out f
-  | None -> ());
+  Debug.PrintRegAlloc.close_ppf ppf;
   color, !nb_spill + 1
 
