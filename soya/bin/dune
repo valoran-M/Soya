@@ -1,4 +1,4 @@
 (executable
  (public_name Soya)
  (name main)
- (libraries Soya lex lang translate debug utils))
+ (libraries Soya lex lang backend debug utils))

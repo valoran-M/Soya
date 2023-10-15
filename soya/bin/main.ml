@@ -1,25 +1,25 @@
 open Format
 
 let imp_to_rtl imp =
-  let rtl = Translate.Imp2rtl.tr_program imp in
+  let rtl = Backend.Imp2rtl.tr_program imp in
   if !Option.debug_rtl
   then Debug.PrintRTL.print_rtl rtl !Option.output_file ".rtl0";
   rtl
 
 let call_convention rtl =
-  let rtl = Translate.Call_convention.tr_program rtl in
+  let rtl = Backend.Call_convention.tr_program rtl in
   if !Option.debug_rtl
   then Debug.PrintRTL.print_reg_rtl rtl !Option.output_file ".rtl1";
   rtl
 
 let rtl_to_ltl rtl =
-  let ltl = Translate.Rtl2ltl.tr_program rtl in
+  let ltl = Backend.Rtl2ltl.tr_program rtl in
   if !Option.debug_ltl
   then Debug.PrintLTL.print_ltl ltl !Option.output_file ".ltl0";
   ltl
 
 let lin_ltl ltl =
-  let line = Translate.Linearize.linearize ltl in
+  let line = Backend.Linearize.linearize ltl in
   if !Option.debug_lin
   then Debug.PrintLinear.print_lin line !Option.output_file ".lin";
   line
@@ -38,7 +38,7 @@ let () =
   let rtl = call_convention rtl in
   let ltl = rtl_to_ltl rtl in
   let lin = lin_ltl ltl in
-  let asm = Translate.Asmgen.gen_prog lin in
+  let asm = Backend.Asmgen.gen_prog lin in
 
   let file = Filename.remove_extension !Option.output_file ^ ".asm" in
   let out = open_out file in
