@@ -12,10 +12,11 @@ type pseudo_reg =
 type 'reg instruction =
   | INop      of node
   | IPutchar  of 'reg * node
+  | IAlloc    of 'reg * node
   | IMove     of 'reg * 'reg * node
   | IOp       of operation * 'reg list * 'reg * node
-  | ILoad     of address * 'reg * node
-  | IStore    of address * 'reg * node
+  | ILoad     of 'reg address * 'reg * node
+  | IStore    of 'reg address * 'reg * node
   | ISetParam of 'reg * int * int * node
   | IGetParam of 'reg * int * int * node
   | ICall     of ident * 'reg list * int * 'reg option * node

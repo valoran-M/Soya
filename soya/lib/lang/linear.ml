@@ -6,9 +6,10 @@ type reg = Mips.register
 type instruction =
   | LLabel    of label
   | LPutchar  of reg
+  | LAlloc    of reg
   | LMove     of reg * reg
-  | LLoad     of address * reg
-  | LStore    of address * reg
+  | LLoad     of reg address * reg
+  | LStore    of reg address * reg
   | LPush     of reg
   | LOp       of operation * reg list * reg
   | LCond     of condition * reg list *  label

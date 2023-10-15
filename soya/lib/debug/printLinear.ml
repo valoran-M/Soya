@@ -17,15 +17,19 @@ let print_function ppf f print_reg =
       match inst with
       | LPutchar reg ->
         fprintf ppf "\tputchar %a\n" print_reg reg;
+      | LAlloc reg ->
+        fprintf ppf "\talloc %a\n" print_reg reg;
       | LMove (r1, r2) ->
         fprintf ppf "\t%a <- %a\n" print_reg r1 print_reg r2;
       | LOp (op, args, rd) ->
         fprintf ppf "\t%a = %a\n" print_reg rd
           (PrintOp.print_op print_reg) (op, args);
       | LLoad (addr, rd) -> 
-        fprintf ppf "\t%a -> %a\n" PrintOp.print_addr addr print_reg rd;
+        fprintf ppf "\t%a -> %a\n"
+          (fun ppf -> PrintOp.print_addr ppf print_reg) addr print_reg rd;
       | LStore (addr, rd) ->
-        fprintf ppf "\t%a -> %a\n" print_reg rd PrintOp.print_addr addr;
+        fprintf ppf "\t%a -> %a\n" print_reg rd
+          (fun ppf -> PrintOp.print_addr ppf print_reg) addr;
       | LPush (rd) ->
         fprintf ppf "\tpush %a\n" print_reg rd;
       | LCall (fun_id) ->

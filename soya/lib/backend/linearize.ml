@@ -34,6 +34,7 @@ let tr_function (fdef : Ltl.function_def) =
     match (Hashtbl.find fdef.code l) with
     | IOp (op, args, r, n)-> (LOp (op, args, r)) :: lin n code
     | IPutchar (r, n)     -> LPutchar r :: lin n code
+    | IAlloc (r, n)       -> LPutchar r :: lin n code
     | IMove (r1, r2, n)   -> LMove (r1, r2) :: lin n code
     | ILoad (a, r, n)     -> LLoad (a, r) :: lin n code
     | IStore (a, r, n)    -> LStore (a, r) :: lin n code

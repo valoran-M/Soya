@@ -111,6 +111,13 @@ let tr_function (fdef : Lang.Imp.function_def) =
       tr_expression e (Some reg) (push_node (IReturn (Some reg)))
     | Expr e ->
       tr_expression e None dest
+    | Deref e ->
+      let reg = new_reg () in
+      tr_expression e (Some reg) (push_node (ILoad ((AddrReg reg), reg, dest)))
+    | Alloc e ->
+      let reg = new_reg () in
+      tr_expression e (Some reg) (push_node (IAlloc (reg, dest)))
+
   and tr_sequence seq entry =
     List.fold_right (fun inst entry ->
       tr_instruction inst entry

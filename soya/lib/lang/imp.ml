@@ -14,6 +14,9 @@ type instruction =
   | While   of expression * sequence
   | Return  of expression
   | Expr    of expression
+  | Deref of expression
+  | Alloc of expression
+
 
 and sequence = instruction list
 

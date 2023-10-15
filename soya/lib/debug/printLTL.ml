@@ -22,6 +22,9 @@ let print_function ppf f print_reg =
       | IPutchar (reg, n) ->
         fprintf ppf "putchar %a\n" print_reg reg;
         print_instruction ppf n
+      | IAlloc (reg, n) ->
+        fprintf ppf "alloc %a\n" print_reg reg;
+        print_instruction ppf n
       | IMove (r1, r2, n) ->
         fprintf ppf "%a <- %a\n" print_reg r1 print_reg r2;
         print_instruction ppf n
@@ -30,10 +33,12 @@ let print_function ppf f print_reg =
           (PrintOp.print_op print_reg) (op, args);
         print_instruction ppf n
       | ILoad (addr, rd, n) -> 
-        fprintf ppf "%a -> %a\n" PrintOp.print_addr addr print_reg rd;
+        fprintf ppf "%a -> %a\n"
+          (fun ppf -> PrintOp.print_addr ppf print_reg) addr print_reg rd;
         print_instruction ppf n
       | IStore (addr, rd, n) ->
-        fprintf ppf "%a -> %a\n" print_reg rd PrintOp.print_addr addr;
+        fprintf ppf "%a -> %a\n" print_reg rd
+          (fun ppf -> PrintOp.print_addr ppf print_reg) addr;
         print_instruction ppf n
       | IPush (rd, n) ->
         fprintf ppf "push %a\n" print_reg rd;

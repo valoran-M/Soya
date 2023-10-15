@@ -36,12 +36,14 @@ let tr_function (fdef : Linear.function_def) =
   let tr_load a r =
     match a with
     | Addr l      -> la r l @@ lw r 0 r
+    | AddrReg ra  -> lw r 0 ra
     | AddrGlobl l -> la r l @@ lw r 0 r
     | AddrStack i -> lw r i sp
   in
   let tr_store a r =
     match a with
     | Addr l      -> la t9 l @@ sw r 0 t9
+    | AddrReg ra  -> sw r 0 ra
     | AddrGlobl l -> la t9 l @@ sw r 0 t9
     | AddrStack i -> sw r i sp
   in
@@ -49,9 +51,11 @@ let tr_function (fdef : Linear.function_def) =
   let tr_instruction (i: Linear.instruction) =
     match i with
     | Linear.LLabel l -> label l
-    | Linear.LPutchar r ->
-      (if a0 <> r then move a0 r else nop)
-      @@ li v0 11
+    | Linear.LPutchar _ ->
+      li v0 11
+      @@ syscall
+    | Linear.LAlloc _ ->
+      li v0 9
       @@ syscall
     | Linear.LMove (rd, r) -> move rd r
     | Linear.LLoad (a, l) -> tr_load a l

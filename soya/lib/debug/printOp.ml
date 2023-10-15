@@ -1,9 +1,10 @@
 open Format
 open Lang.Op
 
-let print_addr ppf addr =
+let print_addr ppf print_reg addr =
   match addr with
   | Addr id      -> fprintf ppf "\"%s\"" id
+  | AddrReg r    -> fprintf ppf "%a\n" print_reg r
   | AddrStack i  -> fprintf ppf "%d(sp)" i
   | AddrGlobl id -> fprintf ppf "\"%s\"" id
 

@@ -1,9 +1,10 @@
 type ident = string
 
-type address =
-  | Addr      of ident
-  | AddrStack of int
-  | AddrGlobl of ident
+type 'reg address =
+  | Addr        of ident
+  | AddrReg     of 'reg
+  | AddrStack   of int
+  | AddrGlobl   of ident
 
 type operation =
   | OConst of int

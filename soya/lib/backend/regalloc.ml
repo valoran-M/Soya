@@ -48,6 +48,11 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
     | Some (p, s) -> Hashtbl.replace pred_succ id (p,  succ :: s)
   in
 
+  let addr_use = function
+    | Lang.Op.AddrReg r -> [r]
+    | _ -> []
+  in
+
   (* Init data (in/out and pred/succ) for get liveness *)
   let rec init pred id =
     add_pred id pred;
@@ -55,6 +60,11 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
       match Hashtbl.find rtl_fun.code id with
       | INop n -> add_succ id n; init id n
       | IPutchar (r, n) ->
+        incr_reg r;
+        add_succ id n;
+        add_def_use id [] [Real v0; Real a0];
+        init id n
+      | IAlloc (r, n) ->
         incr_reg r;
         add_succ id n;
         add_def_use id [] [Real v0; Real a0];
@@ -69,15 +79,15 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] args;
         init id n
-      | ILoad (_, rd, n) ->
+      | ILoad (_, rd, n) -> (* forall AddrReg r, r = rd *)
         incr_reg rd;
         add_succ id n;
         add_def_use id [rd] [];
         init id n
-      | IStore (_, r, n) ->
+      | IStore (a, r, n) ->
         incr_reg r;
         add_succ id n;
-        add_def_use id [] [r];
+        add_def_use id [] (r :: addr_use a);
         init id n
       | IGetParam (r, _, _, n) ->
         incr_reg r;
