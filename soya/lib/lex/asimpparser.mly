@@ -1,7 +1,8 @@
+
 %{
 
   open Lexing
-  open Lang.Simp
+  open Lang.Asimp
 
   let structs = ref []
   let globals = ref []
@@ -28,7 +29,7 @@
 %nonassoc LBRACKET DOT
 
 %start program
-%type <program> program
+%type <unit program> program
 
 %%
 
@@ -97,19 +98,20 @@ mem_access:
 ;
 
 expression:
-| n=CST { Cst n }
-| b=BOOL { Bool b }
-| id=IDENT { Var id }
+| n=CST { mk_expr () (Cst n) }
+| b=BOOL { mk_expr () (Bool b) }
+| id=IDENT { mk_expr () (Var id) }
 | LPAR e=expression RPAR { e }
-| e1=expression op=binop e2=expression { Binop(op, e1, e2) }
-| f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { Call(f, params) }
-| NEW id=IDENT { New(id) }
-| NEW LBRACKET ty=typ COMMA e=expression RBRACKET { NewTab(ty, e) }
-| m=mem_access { Read m }
+| e1=expression op=binop e2=expression { mk_expr () (Binop(op, e1, e2)) }
+| f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr () (Call(f, params)) }
+| NEW id=IDENT { mk_expr () (New(id)) }
+| NEW LBRACKET ty=typ COMMA e=expression RBRACKET { mk_expr () (NewTab(ty, e)) }
+| m=mem_access { mk_expr () (Read m) }
 ;
 
 %inline binop:
-| PLUS { Add }
-| STAR { Mul }
-| LT { Lt }
+| PLUS { Lang.Imp.Add }
+| STAR { Lang.Imp.Mul }
+| LT { Lang.Imp.Lt }
 ;
+

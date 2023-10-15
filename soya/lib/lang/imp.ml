@@ -6,6 +6,8 @@ type expression =
   | Var   of string
   | Binop of binop  * expression * expression
   | Call  of string * expression list
+  | Deref of expression
+  | Alloc of expression
 
 type instruction =
   | Putchar of expression
@@ -14,8 +16,7 @@ type instruction =
   | While   of expression * sequence
   | Return  of expression
   | Expr    of expression
-  | Deref of expression
-  | Alloc of expression
+  | Write   of expression * expression
 
 
 and sequence = instruction list

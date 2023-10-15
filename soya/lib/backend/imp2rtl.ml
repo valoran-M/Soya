@@ -35,6 +35,10 @@ let tr_function (fdef : Lang.Imp.function_def) =
     match exp, reg with
     | Cst  n, Some reg -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b, Some reg -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
+    | Alloc e, Some reg ->
+      tr_expression e (Some reg) (push_node (IAlloc (reg, dest)))
+    | Deref e, Some reg ->
+       tr_expression e (Some reg) (push_node (ILoad ((AddrReg reg), reg, dest)))
     | Var  v, Some reg ->
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
@@ -111,12 +115,12 @@ let tr_function (fdef : Lang.Imp.function_def) =
       tr_expression e (Some reg) (push_node (IReturn (Some reg)))
     | Expr e ->
       tr_expression e None dest
-    | Deref e ->
-      let reg = new_reg () in
-      tr_expression e (Some reg) (push_node (ILoad ((AddrReg reg), reg, dest)))
-    | Alloc e ->
-      let reg = new_reg () in
-      tr_expression e (Some reg) (push_node (IAlloc (reg, dest)))
+    | Write (d, e) ->
+      let re = new_reg () in
+      let rd = new_reg () in
+      tr_expression e (Some re) (
+      tr_expression d (Some rd) (
+      push_node (IStore (AddrReg rd, re, dest))))
 
   and tr_sequence seq entry =
     List.fold_right (fun inst entry ->
