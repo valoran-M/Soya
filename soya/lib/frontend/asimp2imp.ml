@@ -83,6 +83,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
   ) prog.structs;
   {
     globals = List.map fst prog.globals;
+    static  = [];
     functions = List.map tr_function prog.functions;
   }
 

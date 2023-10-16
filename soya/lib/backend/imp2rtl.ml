@@ -1,6 +1,6 @@
 open Lang.Imp
 open Lang.Rtl
-open Lang.Op
+(* open Lang.Op *)
 
 let tr_function (fdef : Lang.Imp.function_def) =
   (* RTL code *)
@@ -63,8 +63,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Some reg ->
       let op =
         match op with
-        | Add -> OAdd | Mul -> OMul
-        | Lt  -> OLt
+        | Add -> Lang.Op.OAdd | Mul -> Lang.Op.OMul
+        | Lt  -> Lang.Op.OLt
       in
       let r1 = new_reg () in
       let r2 = new_reg () in
@@ -141,6 +141,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
 let tr_program (prog : Lang.Imp.program) : pseudo Lang.Rtl.program =
   {
     globals   = prog.globals;
+    static    = prog.static;
     functions = List.map (fun f -> tr_function f) prog.functions;
   }
 

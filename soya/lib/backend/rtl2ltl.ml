@@ -198,6 +198,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
 let tr_program (prog : Rtl.pseudo_reg Rtl.program) : program =
   {
     globals   = prog.globals;
+    static    = prog.static;
     functions = List.map (fun f -> tr_function f) prog.functions;
   }
 

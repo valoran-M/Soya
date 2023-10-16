@@ -27,6 +27,7 @@ type function_def = {
 
 type program = {
     globals   : string list;
+    static    : Op.s_imm list;
     functions : function_def list;
   }
 

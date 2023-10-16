@@ -27,7 +27,7 @@
 
 program:
 | globals=list(variable_decl) functions=list(function_def) EOF
-    { {functions; globals} }
+    { {functions; globals; static = []} } 
 | error { let pos = $startpos in
           let message =
             Printf.sprintf

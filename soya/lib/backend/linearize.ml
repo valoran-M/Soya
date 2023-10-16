@@ -77,5 +77,6 @@ let tr_function (fdef : Ltl.function_def) =
 let linearize prog : Linear.program =
   {
     globals   = prog.globals;
+    static    = prog.static;
     functions = List.map (fun f -> tr_function f) prog.functions;
   }
