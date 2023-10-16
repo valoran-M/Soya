@@ -1,10 +1,9 @@
-
 %{
 
   open Lexing
-  open Lang.Asimp
+  open Lang.Soya
 
-  let structs = ref []
+  let classes = ref []
   let globals = ref []
   let functions = ref []
 
@@ -18,7 +17,8 @@
 %token <string> IDENT
 %token TYP_INT TYP_BOOL TYP_VOID
 %token VAR FUNCTION
-%token DOT NEW LBRACKET RBRACKET STRUCT
+%token ATTRIBUTE METHOD EXTENDS CLASS THIS
+%token DOT NEW LBRACKET RBRACKET
 %token LPAR RPAR BEGIN END COMMA SEMI
 %token PUTCHAR SET IF ELSE WHILE RETURN
 %token EOF
@@ -35,7 +35,7 @@
 
 program:
 | list(decl) EOF
-    { {structs = List.rev !structs;
+    { {classes = List.rev !classes;
        functions = List.rev !functions;
        globals = List.rev !globals} }
 | error { let pos = $startpos in
@@ -48,18 +48,25 @@ program:
 ;
 
 decl:
-| s=struct_def { structs := s :: !structs }
+| c=class_def { classes := c :: !classes }
 | v=variable_decl { let id, ty = v in globals := (id, ty) :: !globals }
 | f=function_def { functions := f :: !functions }
 ;
 
-struct_def:
-| STRUCT name=IDENT BEGIN fields=separated_list(SEMI, typed_ident) END { {name; fields} }
+
+class_def:
+| CLASS name=IDENT parent=option(EXTENDS p=IDENT { p }) 
+   BEGIN fields=list(attribute_decl) methods=list(method_def) END 
+   { { name; fields; methods; parent; } }
 ;
 
 variable_decl:
 | VAR tid=typed_ident SEMI { tid }
 ;
+
+attribute_decl:
+| ATTRIBUTE tid=typed_ident SEMI { tid }
+;  
 
 typed_ident:
 | ty=typ id=IDENT { id, ty }
@@ -70,11 +77,19 @@ typ:
 | TYP_BOOL { TBool }
 | TYP_VOID { TVoid }
 | LBRACKET ty=typ RBRACKET { TArray ty }
-| id=IDENT { TStruct id }
+| id=IDENT { TClass id }
 ;
 
 function_def:
-| FUNCTION return=typ name=IDENT LPAR params=separated_list(COMMA, typed_ident) RPAR
+| FUNCTION fdef=fun_def { fdef }
+;
+
+method_def:
+| METHOD mdef=fun_def { mdef }
+;
+
+fun_def:
+| return=typ name=IDENT LPAR params=separated_list(COMMA, typed_ident) RPAR
     BEGIN locals=list(variable_decl) code=list(instruction) END
     { {name; code; params; return; locals} }
 ;
@@ -94,7 +109,7 @@ instruction:
 
 mem_access:
 | e1=expression LBRACKET e2=expression RBRACKET { Arr(e1, e2) }
-| e=expression DOT id=IDENT { Str(e, id) }
+| e=expression DOT id=IDENT { Atr(e, id) }
 ;
 
 expression:
@@ -104,9 +119,11 @@ expression:
 | LPAR e=expression RPAR { e }
 | e1=expression op=binop e2=expression { mk_expr () (Binop(op, e1, e2)) }
 | f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr () (Call(f, params)) }
-| NEW id=IDENT { mk_expr () (New(id)) }
+| e=expression DOT f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr () (MCall(e, f, params)) }
+| NEW id=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr () (New(id, params)) }
 | NEW LBRACKET ty=typ COMMA e=expression RBRACKET { mk_expr () (NewTab(ty, e)) }
 | m=mem_access { mk_expr () (Read m) }
+| THIS { mk_expr () (This) }
 ;
 
 %inline binop:

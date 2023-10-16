@@ -1,8 +1,8 @@
 (ocamllex
- (modules implexer asimplexer))
+ (modules implexer slexer))
 
 (menhir
- (modules impparser asimpparser)
+ (modules impparser sparser)
  (flags --explain --dump)
  (infer true))
 

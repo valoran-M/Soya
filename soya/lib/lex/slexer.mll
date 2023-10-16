@@ -1,7 +1,7 @@
 {
 
   open Lexing
-  open Asimpparser
+  open Sparser
 
     let keyword_or_ident =
     let h = Hashtbl.create 17 in
@@ -12,9 +12,13 @@
         "while",    WHILE;
         "true",     BOOL true;
         "false",    BOOL false;
-        "var",      VAR;
+        "var",      VAR;        
         "function", FUNCTION;
-        "struct",   STRUCT;
+        "class",    CLASS;
+        "attribute", ATTRIBUTE;
+        "method",   METHOD;
+        "this",     THIS;
+        "extends",  EXTENDS;
         "new",      NEW;
         "return",   RETURN;
         "int",      TYP_INT;
