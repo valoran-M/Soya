@@ -30,11 +30,11 @@ A compiler from Soya to Mips
 
 ### Pass
 
-1. [Imp2RTL](./lib/transformation/imp2rtl.ml) Construction of the CFG, 3-address
+1. [Imp2RTL](./lib/backend/imp2rtl.ml) Construction of the CFG, 3-address
    code generation.
-1. [Call Convention](./lib/transformation/call_convention.ml) Use real register
+1. [Call Convention](./lib/backend/call_convention.ml) Use real register
    to respect Call Convention
-1. [RTL2LTL](./lib/transformation/rtl2ltl.ml) Register allocation
-1. [linearize](./lib/transformation/linearize.ml) Linearization of the CFG
-1. [Asm Gen](./lib/transformation/asmgen.ml) Mips assembly code generation
+1. [RTL2LTL](./lib/backend/rtl2ltl.ml) Register allocation
+1. [linearize](./lib/backend/linearize.ml) Linearization of the CFG
+1. [Asm Gen](./lib/backend/asmgen.ml) Mips assembly code generation
 
