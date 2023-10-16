@@ -22,19 +22,19 @@ A compiler from Soya to Mips
 
 ### Languages
 
-1. [Imp](./lib/lang/imp.ml) A simple imperative language.
-1. [RTL](./lib/lang/rtl.ml) A graph a representation of Imp with pseudos and
+1. [Imp](./soya/lib/lang/imp.ml) A simple imperative language.
+1. [RTL](./soya/lib/lang/rtl.ml) A graph a representation of Imp with pseudos and
    physicals registers with 3-address operations.
-1. [LTL](./lib/lang/ltl.ml) Like RTL but with only physicals registers.
-1. [Linear](./lib/lang/linear.ml) A linear representation of LTL
+1. [LTL](./soya/lib/lang/ltl.ml) Like RTL but with only physicals registers.
+1. [Linear](./soya/lib/lang/linear.ml) A linear representation of LTL
 
 ### Pass
 
-1. [Imp2RTL](./lib/backend/imp2rtl.ml) Construction of the CFG, 3-address
+1. [Imp2RTL](./soya/lib/backend/imp2rtl.ml) Construction of the CFG, 3-address
    code generation.
-1. [Call Convention](./lib/backend/call_convention.ml) Use real register
+1. [Call Convention](./soya/lib/backend/call_convention.ml) Use real register
    to respect Call Convention
-1. [RTL2LTL](./lib/backend/rtl2ltl.ml) Register allocation
-1. [linearize](./lib/backend/linearize.ml) Linearization of the CFG
-1. [Asm Gen](./lib/backend/asmgen.ml) Mips assembly code generation
+1. [RTL2LTL](./soya/lib/backend/rtl2ltl.ml) Register allocation
+1. [linearize](./soya/lib/backend/linearize.ml) Linearization of the CFG
+1. [Asm Gen](./soya/lib/backend/asmgen.ml) Mips assembly code generation
 
