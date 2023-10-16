@@ -119,7 +119,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
       | ILoad(a,r,n)     -> push_node (ILoad (tr_addresse a, reg r, tr_instruction n))
       | IStore(a,r,n)    -> push_node (IStore(tr_addresse a, reg r, tr_instruction n))
-      | ICall(id,lr,_,r,n)-> tr_call id lr (tr_instruction n) r
+      | ICall(id,lr,_,r,n)-> tr_call (tr_addresse id) lr (tr_instruction n) r
       | ICond(c,lr,nt,nf) ->
         push_node
           (ICond(c, List.map reg lr, tr_instruction nt, tr_instruction nf))

@@ -48,6 +48,14 @@ let tr_function (fdef : Linear.function_def) =
     | AddrStack i -> sw r i sp
   in
 
+  let tr_call a =
+    match a with
+    | Addr i      -> jal i
+    | AddrReg r   -> jalr r
+    | AddrStack i -> addi t8 sp i @@ jalr t8
+    | AddrGlobl i -> jal i
+  in
+
   let tr_instruction (i: Linear.instruction) =
     match i with
     | Linear.LLabel l -> label l
@@ -63,7 +71,7 @@ let tr_function (fdef : Linear.function_def) =
     | Linear.LPush r -> push r
     | Linear.LOp (op, args, r) -> tr_op op args r
     | Linear.LCond (c, args, l) -> tr_cond c args l
-    | Linear.LCall l -> jal l
+    | Linear.LCall a -> tr_call a
     | Linear.LGoto l -> b l
     | Linear.LReturn ->
       (if fdef.stack_size <> 0

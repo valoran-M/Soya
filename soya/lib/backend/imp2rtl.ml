@@ -54,7 +54,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
         le ([], id_call, List.length le - 1)
       in
       Hashtbl.replace code id_call
-        (ICall (s, args, List.length args, reg, dest));
+        (ICall (Addr s, args, List.length args, reg, dest));
       entry
     | _ -> dest
   and tr_binop (op : binop) e1 e2 reg dest =

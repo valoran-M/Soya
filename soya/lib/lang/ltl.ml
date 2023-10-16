@@ -11,8 +11,7 @@ type instruction =
   | IOp      of operation * reg list * reg * node
   | ILoad    of reg address * reg * node
   | IStore   of reg address * reg * node
-  | IPush    of reg * node
-  | ICall    of ident * int * node
+  | ICall    of reg Op.address * int * node
   | ICond    of condition * reg list * node * node
   | IReturn  of reg option
   | IGoto    of node

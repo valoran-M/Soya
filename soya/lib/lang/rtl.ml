@@ -19,7 +19,7 @@ type 'reg instruction =
   | IStore    of 'reg address * 'reg * node
   | ISetParam of 'reg * int * int * node
   | IGetParam of 'reg * int * int * node
-  | ICall     of ident * 'reg list * int * 'reg option * node
+  | ICall     of 'reg Op.address * 'reg list * int * 'reg option * node
   | ICond     of condition * 'reg list * node * node
   | IReturn   of 'reg option
   | IGoto     of node

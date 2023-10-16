@@ -53,7 +53,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
         | IStore (a,r,n)     -> tr_store a r (tr_instruction n)
         | IGetParam (r,i,a,n)-> tr_get_param r i a (tr_instruction n)
         | ISetParam (r,i,a,n)-> tr_set_param r i a (tr_instruction n)
-        | ICall (id,_,i,_,n) -> push_node (ICall (id, i, (tr_instruction n)))
+        | ICall (a,_,i,_,n)  -> tr_call a i (tr_instruction n)
         | ICond (c,lr,nt,nf) -> tr_cond c lr (tr_instruction nt)
                                              (tr_instruction nf)
         | IReturn _ -> assert false
@@ -63,6 +63,21 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       Hashtbl.replace id_env i nid;
       Hashtbl.replace code nid node;
       nid
+  and tr_call a i dest =
+    let addr, spilled =
+      match a with
+      | Lang.Op.Addr i -> Lang.Op.Addr i, None
+      | Lang.Op.AddrStack i -> Lang.Op.AddrStack i, None
+      | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i, None
+      | Lang.Op.AddrReg r ->
+        match get_reg r with
+        | Reg r -> Lang.Op.AddrReg r, None
+        | Spill n -> Lang.Op.AddrReg Mips.t8, Some n
+    in
+    match spilled with
+    | None    -> push_node (ICall (addr, i, dest))
+    | Some n  -> push_node (ILoad (spill_addr n, Mips.t8,
+                 push_node (ICall (addr, i, dest))))
   and tr_load a r dest =
     let addr, spilled =
       match a with

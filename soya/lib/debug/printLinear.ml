@@ -33,7 +33,8 @@ let print_function ppf f print_reg =
       | LPush (rd) ->
         fprintf ppf "\tpush %a\n" print_reg rd;
       | LCall (fun_id) ->
-        fprintf ppf "\t\"%s\"()\n" fun_id;
+        fprintf ppf "\t\"%a\"()\n"
+          (fun ppf -> PrintOp.print_addr ppf print_reg) fun_id;
       | LCond (c, args, n) ->
         fprintf ppf "\tif %a then goto %s\n"
           (PrintOp.print_cond print_reg) (c, args) n;

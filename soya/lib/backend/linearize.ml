@@ -38,7 +38,6 @@ let tr_function (fdef : Ltl.function_def) =
     | IMove (r1, r2, n)   -> LMove (r1, r2) :: lin n code
     | ILoad (a, r, n)     -> LLoad (a, r) :: lin n code
     | IStore (a, r, n)    -> LStore (a, r) :: lin n code
-    | IPush (r, n)        -> LPush r :: lin n code
     | ICall (i, _, n)     -> LCall i :: lin n code
     | IReturn _           -> (LReturn :: code)
     | IGoto n             -> lin n code

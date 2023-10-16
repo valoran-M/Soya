@@ -40,11 +40,9 @@ let print_function ppf f print_reg =
         fprintf ppf "%a -> %a\n" print_reg rd
           (fun ppf -> PrintOp.print_addr ppf print_reg) addr;
         print_instruction ppf n
-      | IPush (rd, n) ->
-        fprintf ppf "push %a\n" print_reg rd;
-        print_instruction ppf n
       | ICall (fun_id, _, n) ->
-        fprintf ppf "\"%s\"()\n" fun_id;
+        fprintf ppf "\"%a\"()\n"
+          (fun ppf -> PrintOp.print_addr ppf print_reg) fun_id;
         print_instruction ppf n
       | ICond (c, args, nt, nf) ->
         fprintf ppf "if %a then goto %d else goto %d\n"

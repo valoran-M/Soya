@@ -13,7 +13,7 @@ type instruction =
   | LPush     of reg
   | LOp       of operation * reg list * reg
   | LCond     of condition * reg list *  label
-  | LCall     of ident
+  | LCall     of reg address
   | LGoto     of label
   | LReturn
 

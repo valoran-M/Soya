@@ -59,7 +59,8 @@ let print_function ppf f print_reg =
         fprintf ppf "%a -> set_param %d\n" print_reg r i;
         print_instruction ppf n;
       | ICall (fun_id, args, _, _, n) ->
-        fprintf ppf "\"%s\"(%a)\n" fun_id print_arg args;
+        fprintf ppf "\"%a\"(%a)\n"
+          (fun ppf -> PrintOp.print_addr ppf print_reg) fun_id print_arg args;
         print_instruction ppf n;
       | ICond (c, args, nt, nf) ->
         fprintf ppf "if %a then goto %d else goto %d\n"
