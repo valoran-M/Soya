@@ -17,9 +17,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | TInt | TBool -> 4
     | TVoid -> 0
     | TArray t -> type_size t
-    | TClass c ->
-      let c = get_class c in
-      List.fold_left (fun a t -> a + type_size (snd t)) 4 c.fields
+    | TClass _ -> 4
   in
 
   let get_class_offset s f =
