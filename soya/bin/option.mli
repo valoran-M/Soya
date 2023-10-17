@@ -2,7 +2,7 @@ val input_file  : string ref
 val output_file : string ref
  
 type lang_compile =
-  | Imp
+  | Imp | Soya
 val lang_compile : lang_compile ref
 
 val debug_imp : bool ref

@@ -1,5 +1,9 @@
 open Format
 
+let soya_to_imp soya =
+  let tsoya = Frontend.Typecheck.type_check soya in
+  Frontend.Soya2imp.tr_program tsoya
+
 let imp_to_rtl imp =
   let rtl = Backend.Imp2rtl.tr_program imp in
   if !Option.debug_rtl
@@ -28,13 +32,15 @@ let () =
   Option.parse_args ();
   let c = open_in !Option.input_file in
   let lb = Lexing.from_channel c in
-  let rtl = 
+  let imp = 
     let open Lex in
     match !Option.lang_compile with
-    | Imp ->
-      let prog = Impparser.program Implexer.token lb in
-      imp_to_rtl prog
+    | Imp -> Impparser.program Implexer.token lb
+    | Soya ->
+      let prog = Sparser.program Slexer.token lb in
+      soya_to_imp prog
   in
+  let rtl = imp_to_rtl imp in
   let rtl = call_convention rtl in
   let ltl = rtl_to_ltl rtl in
   let lin = lin_ltl ltl in

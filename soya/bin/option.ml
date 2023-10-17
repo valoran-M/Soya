@@ -5,7 +5,9 @@ let output_file = ref ""
 
 type lang_compile =
   | Imp
-let lang_compile = ref Imp
+  | Soya
+
+let lang_compile = ref Soya
 
 let debug_imp = ref false
 let debug_rtl = ref false
@@ -16,7 +18,8 @@ let debug_list = [debug_imp; debug_rtl; debug_ltl; debug_lin;
                   Debug.PrintRegAlloc.debug]
 
 let spec = [
-  ("-Imp ", Arg.Unit (fun () -> lang_compile := Imp), "Imp language compiler");
+  ("-Imp",  Arg.Unit (fun () -> lang_compile := Imp), "Imp language compiler");
+  ("-Soya", Arg.Unit (fun () -> lang_compile := Soya), "Soya language compiler");
   
   ("-dimp", Arg.Set debug_imp, "Save generated Imp");
   ("-drtl", Arg.Set debug_rtl, "Save generated RTL");

@@ -30,7 +30,7 @@ type function_def = {
 
 type program = {
     globals: string list;
-    static : Op.s_imm list;
+    static : Op.static list;
     functions: function_def list;
   }
 

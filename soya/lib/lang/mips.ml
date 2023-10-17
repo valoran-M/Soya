@@ -40,6 +40,10 @@ type 'a asm =
   | S of string
   | C of 'a asm * 'a asm
 
+type dword_t =
+  | Int   of int
+  | Label of label
+
 type text = [`text ] asm
 type data = [`data ] asm
 
@@ -62,8 +66,12 @@ let pr_list fmt pr l =
   | i :: ll -> pr fmt i;
       List.iter (fun i -> fprintf fmt ", %a" pr i) ll
 
+let pr_dword_t fmt = function
+  | Int i   -> fprintf fmt "%i" i
+  | Label l -> fprintf fmt "%s" l
+
 let pr_ilist fmt l =
-  pr_list fmt (fun fmt i -> fprintf fmt "%i" i) l
+  pr_list fmt (fun fmt i -> fprintf fmt "%a" pr_dword_t i) l
     
 let add  r1 r2 r3 = ins "add %s, %s, %s"  r1 r2 r3
 let addi r1 r2 i  = ins "addi %s, %s, %d" r1 r2 i

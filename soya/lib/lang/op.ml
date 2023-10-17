@@ -2,6 +2,8 @@ type ident = string
 
 type s_imm = Label of ident | Cst of int
 
+type static = ident * s_imm list
+
 type 'reg address =
   | Addr        of ident
   | AddrReg     of 'reg

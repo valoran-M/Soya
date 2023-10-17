@@ -37,7 +37,7 @@ type 'reg function_def = {
 
 type 'reg program = {
     globals   : string list;
-    static    : Op.s_imm list;
+    static    : Op.static list;
     functions : ('reg function_def) list;
   }
 

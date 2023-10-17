@@ -109,9 +109,19 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     }
   in
 
+  let static : Op.static list =
+    List.map (fun (c : typ class_def) ->
+      (c.name ^ "$descriptor", (Op.Cst 0) ::
+           (List.fold_right
+              (fun (m : typ function_def) s ->
+                Op.Label (m.name ^ "$" ^ c.name) :: s)
+           c.methods []))
+    ) prog.classes
+  in
+
   {
     globals = List.map fst prog.globals;
-    static  = [];
+    static  = static;
     functions = List.fold_left (fun f c -> tr_class c f)
       (List.map tr_function prog.functions) prog.classes;
   }

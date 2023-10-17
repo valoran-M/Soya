@@ -128,8 +128,18 @@ let gen_prog (prog : Lang.Linear.program) : program =
   in
   let text = init @@ function_codes @@ built_ins
   and data = List.fold_right
-    (fun id code -> label id @@ dword [0] @@ code)
+    (fun id code -> label id @@ dword [Mips.Int 0] @@ code)
     prog.globals nop
+  in
+
+  let data = List.fold_left
+    (fun d (id, s) -> d @@ label id @@ dword (
+      List.map (fun (s : Op.s_imm) ->
+        match s with
+        | Label id -> Mips.Label id
+        | Cst i -> Mips.Int i
+      ) s)
+    ) data prog.static
   in
   {text; data}
 
