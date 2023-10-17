@@ -12,7 +12,7 @@ type pseudo_reg =
 type 'reg instruction =
   | INop      of node
   | IPutchar  of 'reg * node
-  | IAlloc    of 'reg * node
+  | IAlloc    of 'reg * 'reg option * node
   | IMove     of 'reg * 'reg * node
   | IOp       of operation * 'reg list * 'reg * node
   | ILoad     of 'reg address * 'reg * node

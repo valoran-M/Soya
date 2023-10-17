@@ -20,6 +20,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | TClass _ -> 4
   in
 
+  let field_size (c : typ class_def) =
+    List.fold_left (fun a (_, t) -> a + type_size t ) 4 c.fields
+  in
+
   let get_class_offset s f =
     let s = get_class s in
     let f, _ = List.fold_left (fun (found, o) (field, t) ->
@@ -30,6 +34,21 @@ let tr_program (prog : typ program) : Lang.Imp.program =
         then Some o, o
         else (None, o + type_size t))
     (None, 4) s.fields in
+    match f with
+    | Some o -> o
+    | None -> assert false
+  in
+
+  let get_method_offset c m =
+    let c = type_to_class c in
+    let f, _ = List.fold_left (fun (found, o) (field : typ function_def) ->
+      match found with
+      | Some _ -> found, o
+      | None ->
+        if field.name = m
+        then Some o, o
+        else (None, o + 4))
+    (None, 4) c.methods in
     match f with
     | Some o -> o
     | None -> assert false
@@ -47,9 +66,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | New (c, args)       -> Call("constructor$"^c,List.map tr_expression args)
     | NewTab (t, e)       -> Alloc(Binop(Mul,tr_expression e,Cst(type_size t)))
     | MCall (o, s, args)  ->
-      let args = tr_expression o :: (List.map tr_expression args) in
-      let c_name = (type_to_class o.annot).name in
-      Imp.Call (s ^ "$" ^ c_name, args)
+      let c = tr_expression o in
+      let args = c :: (List.map tr_expression args) in
+      let f = Imp.Binop (Add, Deref c, Cst (get_method_offset o.annot s)) in
+      Imp.DCall (Deref f, args)
   and tr_mem (m : typ mem) : Imp.expression =
     match m with
     | Arr (a, o) ->
@@ -79,10 +99,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
   let tr_class (c : typ class_def) f : Imp.function_def list =
     let tr_method (f : typ function_def) : Imp.function_def =
       if f.name = "constructor" then 
-        let size = type_size (TClass c.name) in
+        let size = field_size (get_class c.name) in
         let code : Imp.sequence =
           Imp.Set("this", Alloc (Cst size))
-          :: Write(Var "this", Var(c.name ^ "$" ^ "descriptor"))
+          :: Write(Var "this", Addr(c.name ^ "$" ^ "descriptor"))
           :: tr_seq f.code @ [Return (Var "this")]
         in
         { name = f.name ^ "$" ^ c.name;

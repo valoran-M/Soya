@@ -1,5 +1,5 @@
-open Lang.Imp
 open Lang.Rtl
+open Lang.Imp
 (* open Lang.Op *)
 
 let tr_function (fdef : Lang.Imp.function_def) =
@@ -35,8 +35,10 @@ let tr_function (fdef : Lang.Imp.function_def) =
     match exp, reg with
     | Cst  n, Some reg -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b, Some reg -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
+    | Addr l, Some reg -> push_node (IOp (OLabel l, [], reg, dest))
     | Alloc e, Some reg ->
-      tr_expression e (Some reg) (push_node (IAlloc (reg, dest)))
+      let r = new_reg () in
+      tr_expression e (Some r) (push_node (IAlloc (r, Some reg, dest)))
     | Deref e, Some reg ->
        tr_expression e (Some reg) (push_node (ILoad ((AddrReg reg), reg, dest)))
     | Var  v, Some reg ->
@@ -44,6 +46,20 @@ let tr_function (fdef : Lang.Imp.function_def) =
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
       | None    -> push_node (ILoad (AddrGlobl v, reg, dest)))
     | Binop (op, e1, e2), _ -> tr_binop op e1 e2 reg dest
+    | DCall (e, le), _ ->
+      let id_call = new_node () in
+      let freg = new_reg () in
+      let id_f = tr_expression e (Some freg) id_call in
+      let args, entry, _ =
+        List.fold_right (fun exp (lr, dest, nb_arg) -> 
+          let reg =  new_reg () in
+          let id_node = tr_expression exp (Some reg) dest in
+          (reg :: lr, id_node, nb_arg - 1))
+        le ([], id_f, List.length le - 1)
+      in
+      Hashtbl.replace code id_call
+        (ICall (AddrReg freg, args, List.length args, reg, dest));
+      entry
     | Call (s, le), _ ->
       let id_call = new_node () in
       let args, entry, _ =

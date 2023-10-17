@@ -67,7 +67,7 @@ let print_function ppf f print_reg =
           (PrintOp.print_cond print_reg) (c, args) nt nf;
         print_instruction ppf nt;
         print_instruction ppf nf;
-      | IAlloc (r, n) ->
+      | IAlloc (r, _, n) ->
         fprintf ppf "IAlloc %a\n" print_reg r;
         print_instruction ppf n
       | IReturn (Some r) ->

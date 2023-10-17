@@ -97,11 +97,11 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     push_node (IPutchar (Real a0, dest))))
   in
 
-  let tr_alloc r dest =
+  let tr_alloc r rd dest =
     let r = reg r in
     push_node (IMove (Real a0, r,
-    push_node (IAlloc (Real a0,
-    push_node (IMove (r, Real Lang.Mips.v0, dest))))))
+    push_node (IAlloc (Real a0, None,
+    push_node (IMove (reg rd, Real v0, dest))))))
   in
 
   let rec tr_instruction i =
@@ -114,7 +114,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
       | INop n           -> push_node (INop (tr_instruction n))
       | IGoto n          -> push_node (IGoto (tr_instruction n))
       | IPutchar(r,n)    -> tr_putchar r (tr_instruction n)
-      | IAlloc(r, n)     -> tr_alloc r (tr_instruction n)
+      | IAlloc(r,Some d,n)-> tr_alloc r d (tr_instruction n)
       | IMove(rd,r,n)    -> push_node (IMove (reg rd, reg r, tr_instruction n))
       | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
       | ILoad(a,r,n)     -> push_node (ILoad (tr_addresse a, reg r, tr_instruction n))
@@ -132,7 +132,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
                              (IReturn None))) in
         let id = pop_callee_save dest in
         Hashtbl.replace id_env i id; id
-      | ISetParam _ | IGetParam _ -> assert false
+      | ISetParam _ | IGetParam _ | IAlloc (_, None,_) -> assert false
       in
       let node = Hashtbl.find code bid in
       Hashtbl.remove code bid;

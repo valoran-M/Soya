@@ -12,6 +12,7 @@ type 'reg address =
 
 type operation =
   | OConst of int
+  | OLabel of ident
   | OAddImm of int
   | OMulImm of int
   | OAdd  | OMul

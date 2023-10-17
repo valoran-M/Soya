@@ -6,8 +6,10 @@ type expression =
   | Var   of string
   | Binop of binop  * expression * expression
   | Call  of string * expression list
+  | DCall of expression * expression list
   | Deref of expression
   | Alloc of expression
+  | Addr  of string
 
 type instruction =
   | Putchar of expression

@@ -64,7 +64,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [] [Real v0; Real a0];
         init id n
-      | IAlloc (r, n) ->
+      | IAlloc (r, _, n) ->
         incr_reg r;
         add_succ id n;
         add_def_use id [] [Real v0; Real a0];

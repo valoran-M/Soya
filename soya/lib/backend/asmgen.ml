@@ -14,6 +14,7 @@ let tr_function (fdef : Linear.function_def) =
   let tr_op op args r =
     match op, args with
     | OConst n,  []       -> li r n
+    | OLabel l,  []       -> la r l
     | OAddImm n, [r1]     -> addi r r1 n
     | OMulImm n, [r1]     -> addi r r1 n
     | OAdd,      [r1; r2] -> add r r1 r2

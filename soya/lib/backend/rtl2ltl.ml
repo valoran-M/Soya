@@ -44,7 +44,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       let bid = match Hashtbl.find def.code i with
         | INop n             -> push_node (IGoto ((tr_instruction n)))
         | IPutchar (r,n)     -> tr_putchar r (tr_instruction n)
-        | IAlloc (r, n)      -> tr_alloc r (tr_instruction n)
+        | IAlloc (r,_,n)     -> tr_alloc r (tr_instruction n)
         | IGoto n            -> push_node (IGoto (tr_instruction n))
         | IReturn None       -> push_node (IReturn None)
         | IMove (r1,r2,n)    -> tr_move r1 r2 (tr_instruction n)
