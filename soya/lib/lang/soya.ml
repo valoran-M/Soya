@@ -1,3 +1,7 @@
+type location = 
+  { fc  : Lexing.position
+  ; lc  : Lexing.position}
+
 type typ =
   | TInt 
   | TBool

@@ -35,7 +35,7 @@ let rec get_method envc c m =
   match Hashtbl.find_opt envc c with
   | None -> failwith (Printf.sprintf "Class '%s' doesn't exist" c)
   | Some c ->
-    match List.find_opt (fun (e : unit function_def) ->
+    match List.find_opt (fun (e : location function_def) ->
         e.name = m)
           c.methods with
     | Some m -> m

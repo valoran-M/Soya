@@ -10,22 +10,19 @@ let rec type_to_string = function
 
 module Env = Map.Make(String)
 
-let type_check (prog : unit program) =
+let type_check (prog : location program) =
   let envc = Hashtbl.create 16 in
 
   let get_function f =
     try
-      List.find (fun (e : unit function_def) -> e.name = f) prog.functions
+      List.find (fun (e : location function_def) -> e.name = f) prog.functions
     with Not_found -> failwith "Function doesn't exist"
   in
 
-  let check_type t exp =
+  let check_type l t exp =
     if t = exp
     then ()
-    else 
-      failwith (
-        Printf.sprintf "Typer failed : %s <> %s"
-          (type_to_string t) (type_to_string exp))
+    else Error_soy.Error.type_error l t exp
   in
 
   let get_array_type a =
@@ -51,35 +48,35 @@ let type_check (prog : unit program) =
   in
   let type_var v env = mk_expr (get_var_type v env) (Var v) in
 
-  let rec type_expr (expr : unit expression) (env : typ Env.t) : typ expression=
+  let rec type_expr (expr : location expression) (env : typ Env.t) : typ expression=
     match expr.expr with
     | Cst c           -> mk_expr TInt (Cst c)
     | Bool b          -> mk_expr TBool (Bool b)
     | Var v           -> type_var v env
     | Binop ((Add | Mul as op), e1, e2) ->
-      let e1 = type_expr e1 env in
-      let e2 = type_expr e2 env in
-      check_type e1.annot TInt; check_type e2.annot TInt;
-      mk_expr TInt (Binop (op, e1, e2))
+      let e1t = type_expr e1 env in
+      let e2t = type_expr e2 env in
+      check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
+      mk_expr TInt (Binop (op, e1t, e2t))
     | Binop (Lt as op, e1, e2) ->
-      let e1 = type_expr e1 env in
-      let e2 = type_expr e2 env in
-      check_type e1.annot TInt; check_type e2.annot TInt;
-      mk_expr TBool (Binop (op, e1, e2))
+      let e1t = type_expr e1 env in
+      let e2t = type_expr e2 env in
+      check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
+      mk_expr TBool (Binop (op, e1t, e2t))
     | Call (f, args) -> type_function f args env
     | MCall (c, f, args) -> type_method c f args env
     | New (c, args) -> type_constructor c args env
     | NewTab (t, s) ->
-      let s = type_expr s env in
-      check_type s.annot TInt;
-      mk_expr t (NewTab (t, s))
+      let st = type_expr s env in
+      check_type s.annot st.annot TInt;
+      mk_expr t (NewTab (t, st))
     | Read m -> type_read m env
     | This -> mk_expr (type_var "this" env).annot This
 
-  and type_args args (f : unit function_def) env =
+  and type_args args (f : location function_def) env =
     List.fold_left2 (fun n arg (_, t) ->
         let e = type_expr arg env in
-        check_type e.annot t;
+        check_type arg.annot e.annot t;
         e :: n
       ) [] args f.params
 
@@ -105,9 +102,9 @@ let type_check (prog : unit program) =
     | Arr (a, i) ->
       let a = type_expr a env in
       let t = get_array_type a.annot in
-      let i = type_expr i env in
-      check_type i.annot TInt;
-      mk_expr (TArray t) (Read (Arr (a, i)))
+      let it = type_expr i env in
+      check_type i.annot it.annot TInt;
+      mk_expr (TArray t) (Read (Arr (a, it)))
     | Atr (c, f) ->
       let c = type_expr c env in
       let s = get_class_name c.annot in
@@ -115,43 +112,43 @@ let type_check (prog : unit program) =
       mk_expr t (Read (Atr (c, f)))
   in
 
-  let rec type_instruction (i : unit instruction) (ret: typ) env : typ instruction =
+  let rec type_instruction i (ret: typ) env : typ instruction =
     match i with
     | Putchar e ->
-      let e = type_expr e env in
-      check_type e.annot TInt;
-      Putchar e
+      let et = type_expr e env in
+      check_type e.annot et.annot TInt;
+      Putchar et
     | Set (s, e) ->
-      let e = type_expr e env in
+      let et = type_expr e env in
       let t = get_var_type s env in
-      check_type e.annot t; Set (s, e)
+      check_type e.annot et.annot t; Set (s, et)
     | If (c, e1, e2) ->
-      let c = type_expr c env in
-      check_type c.annot TBool;
-      If (c, type_sequence e1 ret env, type_sequence e2 ret env)
+      let ct = type_expr c env in
+      check_type c.annot ct.annot TBool;
+      If (ct, type_sequence e1 ret env, type_sequence e2 ret env)
     | While (c, e) ->
-      let c = type_expr c env in
-      check_type c.annot TBool;
-      While (c, type_sequence e ret env)
+      let ct = type_expr c env in
+      check_type c.annot ct.annot TBool;
+      While (ct, type_sequence e ret env)
     | Return e ->
-      let e = type_expr e env in
-      check_type e.annot ret; Return e
+      let et = type_expr e env in
+      check_type e.annot et.annot ret; Return et
     | Expr e -> Expr (type_expr e env)
     | Write (m, e) ->
-      let e = type_expr e env in
+      let et = type_expr e env in
       match m with
       | Arr (a, i) ->
-        let i = type_expr i env in
-        check_type i.annot TInt;
+        let it = type_expr i env in
+        check_type i.annot it.annot TInt;
         let a = type_expr a env in
         let t = get_array_type a.annot in
-        check_type e.annot t; Write (Arr(a, i), e)
+        check_type e.annot et.annot t; Write (Arr(a, it), et)
       | Atr (c, f) ->
         let c = type_expr c env in
         let s = get_class_name c.annot in
         let _, t = get_field envc s f in
-        check_type e.annot t;
-        (Write (Atr (c, f), e))
+        check_type e.annot et.annot t;
+        (Write (Atr (c, f), et))
   and type_sequence s ret env =
     List.map (fun s -> type_instruction s ret env) s
   in
@@ -162,13 +159,13 @@ let type_check (prog : unit program) =
 
   let env = add_vars prog.globals Env.empty in
 
-  let type_function env (f : unit function_def) : typ function_def =
+  let type_function env (f : location function_def) : typ function_def =
     let env = add_vars f.locals (add_vars f.params env) in
     let code = type_sequence f.code f.return env in
     { f with code }
   in
 
-  let type_class (c : unit class_def) =
+  let type_class (c : location class_def) =
     let env = Env.add "this" (TClass c.name) env in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in

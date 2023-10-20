@@ -1,8 +1,12 @@
 open Format
+open Error_soy
 
 let soya_to_imp soya =
-  let tsoya = Frontend.Typecheck.type_check soya in
-  Frontend.Soya2imp.tr_program tsoya
+  let open Error in
+  try
+    let tsoya = Frontend.Typecheck.type_check soya in
+    Frontend.Soya2imp.tr_program tsoya
+  with Error e -> Errorcat.print_error e !Option.input_file; exit 0
 
 let imp_to_rtl imp =
   let rtl = Backend.Imp2rtl.tr_program imp in
