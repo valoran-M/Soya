@@ -39,16 +39,18 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | None -> assert false
   in
 
+  let envm = Hashtbl.create 16 in
   let get_method_offset c m =
     let c = type_to_class c in
-    let f, _ = List.fold_left (fun (found, o) (field : typ function_def) ->
+    let methods = Classe.merge_methods envm prog c in
+    let f, _ = List.fold_left (fun (found, o) (_, (field : typ function_def)) ->
       match found with
       | Some _ -> found, o
       | None ->
         if field.name = m
         then Some o, o
         else (None, o + 4))
-    (None, 4) c.methods in
+    (None, 4) methods in
     match f with
     | Some o -> o
     | None -> assert false
@@ -130,10 +132,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
   let static : Op.static list =
     List.map (fun (c : typ class_def) ->
       (c.name ^ "$descriptor", (Op.Cst 0) ::
-           (List.fold_right
-              (fun (m : typ function_def) s ->
-                Op.Label (m.name ^ "$" ^ c.name) :: s)
-           c.methods []))
+                (List.fold_right
+                  (fun (n, (m : typ function_def)) s ->
+                    Op.Label (m.name ^ "$" ^ n) :: s)
+                  (Classe.merge_methods envm prog c) []))
     ) prog.classes
   in
 
