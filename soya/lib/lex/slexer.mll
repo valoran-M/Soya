@@ -12,12 +12,13 @@
         "while",    WHILE;
         "true",     BOOL true;
         "false",    BOOL false;
-        "var",      VAR;        
+        "var",      VAR;
         "function", FUNCTION;
         "class",    CLASS;
-        "attribute", ATTRIBUTE;
+        "attribute",ATTRIBUTE;
         "method",   METHOD;
         "this",     THIS;
+        "super",    SUPER;
         "extends",  EXTENDS;
         "new",      NEW;
         "return",   RETURN;
@@ -37,53 +38,30 @@ let alpha = ['a'-'z' 'A'-'Z']
 let ident = ['a'-'z' '_'] (alpha | '_' | digit)*
   
 rule token = parse
-  | ['\n']
-      { new_line lexbuf; token lexbuf }
-  | [' ' '\t' '\r']+
-      { token lexbuf }
-  | "//" [^ '\n']* "\n"
-      { new_line lexbuf; token lexbuf }
-  | "/*" 
-      { comment lexbuf; token lexbuf }
-  | number as n
-      { CST(int_of_string n) }
-  | ident as id
-      { keyword_or_ident id }
-  | ";"
-      { SEMI }
-  | "="
-      { SET }
-  | "+"
-      { PLUS }
-  | "*"
-      { STAR }
-  | "<"
-      { LT }
-  | "("
-      { LPAR }
-  | ")"
-      { RPAR }
-  | "{"
-      { BEGIN }
-  | "}"
-      { END }
-  | "["
-      { LBRACKET }
-  | "]"
-      { RBRACKET }
-  | "."
-      { DOT }
-  | ","
-      { COMMA }
-  | _
-      { failwith ("Unknown character : " ^ (lexeme lexbuf)) }
-  | eof
-      { EOF }
+  | ['\n']                { new_line lexbuf; token lexbuf }
+  | [' ' '\t' '\r']+      { token lexbuf }
+  | "//" [^ '\n']* "\n"   { new_line lexbuf; token lexbuf }
+  | "/*"                  { comment lexbuf; token lexbuf }
+  | number as n           { CST(int_of_string n) }
+  | ident as id           { keyword_or_ident id }
+  | ";"   { SEMI }
+  | "="   { SET }
+  | "+"   { PLUS }
+  | "*"   { STAR }
+  | "<"   { LT }
+  | "("   { LPAR }
+  | ")"   { RPAR }
+  | "{"   { BEGIN }
+  | "}"   { END }
+  | "["   { LBRACKET }
+  | "]"   { RBRACKET }
+  | "."   { DOT }
+  | ","   { COMMA }
+  | _     { failwith ("Unknown character : " ^ (lexeme lexbuf)) }
+  | eof   { EOF }
 
 and comment = parse
-  | "*/"
-      { () }
-  | _
-      { comment lexbuf }
-  | eof
-      { failwith "unfinished comment" }
+  | "*/"    { () }
+  | _       { comment lexbuf }
+  | eof     { failwith "unfinished comment" }
+

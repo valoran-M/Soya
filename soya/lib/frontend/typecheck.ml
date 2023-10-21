@@ -1,13 +1,6 @@
 open Classe
 open Lang.Soya
 
-let rec type_to_string = function
-  | TInt -> "int"
-  | TBool -> "bool"
-  | TClass c -> c
-  | TArray a -> Printf.sprintf "%s[]" (type_to_string a)
-  | TVoid -> "()"
-
 module Env = Map.Make(String)
 
 let type_check (prog : location program) =
@@ -31,9 +24,10 @@ let type_check (prog : location program) =
     | _ -> failwith "Is not an array"
   in
 
-  let get_class_name t =
+  let rec get_class_name t =
     match t with
     | TClass s -> s
+    | TParent c -> get_class_name c
     | _ -> failwith "Is not a class"
   in
 
@@ -48,7 +42,7 @@ let type_check (prog : location program) =
   in
   let type_var v env = mk_expr (get_var_type v env) (Var v) in
 
-  let rec type_expr (expr : location expression) (env : typ Env.t) : typ expression=
+  let rec type_expr (expr : location expression) env : typ expression=
     match expr.expr with
     | Cst c           -> mk_expr TInt (Cst c)
     | Bool b          -> mk_expr TBool (Bool b)
@@ -70,8 +64,9 @@ let type_check (prog : location program) =
       let st = type_expr s env in
       check_type s.annot st.annot TInt;
       mk_expr t (NewTab (t, st))
-    | Read m -> type_read m env
-    | This -> mk_expr (type_var "this" env).annot This
+    | Read m  -> type_read m env
+    | This    -> mk_expr (type_var "this" env).annot This
+    | Super   -> mk_expr (type_var "super" env).annot Super
 
   and type_args args (f : location function_def) env =
     List.fold_left2 (fun n arg (_, t) ->
@@ -167,6 +162,9 @@ let type_check (prog : location program) =
 
   let type_class (c : location class_def) =
     let env = Env.add "this" (TClass c.name) env in
+    let env = match c.parent with
+              | Some c -> Env.add "super" (TParent (TClass c)) env 
+              | None   -> env in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in
     let fields = merge_fields envc c.name [] in

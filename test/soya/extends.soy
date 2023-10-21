@@ -19,8 +19,8 @@ class point3 extends point {
     this.z = z;
   }
 
-  method int sum3(int x) {
-    return this.sum(x) + this.z;
+  method int sum(int x) {
+    return super.sum(x) + this.z;
   }
 }
 
@@ -28,7 +28,7 @@ function void main() {
   var point3 p;
   var int c;
   p = new point3(1, 1, 1);
-  c = p.sum3(48);
+  c = p.sum(48);
   putchar(c);
 }
 

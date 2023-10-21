@@ -6,18 +6,20 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     List.find (fun s -> s.name = st) prog.classes
   in
 
-  let type_to_class t =
+  let rec type_to_class t =
     match t with
     | TClass c -> get_class c
+    | TParent c -> type_to_class c
     | _ -> assert false
   in
 
   let rec type_size (t : typ) =
     match t with
     | TInt | TBool -> 4
-    | TVoid -> 0
-    | TArray t -> type_size t
-    | TClass _ -> 4
+    | TVoid     -> 0
+    | TArray t  -> type_size t
+    | TClass _  -> 4
+    | TParent _ -> 4
   in
 
   let field_size (c : typ class_def) =
@@ -67,11 +69,20 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | This                -> Var "this"
     | New (c, args)       -> Call("constructor$"^c,List.map tr_expression args)
     | NewTab (t, e)       -> Alloc(Binop(Mul,tr_expression e,Cst(type_size t)))
+    | Super               -> Var "this"
     | MCall (o, s, args)  ->
       let c = tr_expression o in
       let args = c :: (List.map tr_expression args) in
-      let f = Imp.Binop (Add, Deref c, Cst (get_method_offset o.annot s)) in
+      let f = Imp.Binop (Add, deref_methode_call o.annot c,
+                              Cst (get_method_offset o.annot s)) in
       Imp.DCall (Deref f, args)
+  
+  and deref_methode_call t c =
+    match t with
+    | TClass _  -> Imp.Deref c
+    | TParent p -> Imp.Deref (deref_methode_call p c)
+    | _ -> assert false
+
   and tr_mem (m : typ mem) : Imp.expression =
     match m with
     | Arr (a, o) ->
@@ -80,9 +91,8 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       Binop (Mul, Cst case_size, tr_expression o))
     | Atr (st, f) ->
       match st.annot with
-      | TClass s ->
-        Binop (Add, Cst (get_class_offset s f), tr_expression st)
-      | _ -> assert false
+      | TClass s -> Binop (Add, Cst (get_class_offset s f), tr_expression st)
+      | _        -> assert false
   in
 
   let rec tr_instruction (i : typ instruction) : Imp.instruction =
@@ -131,11 +141,15 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let static : Op.static list =
     List.map (fun (c : typ class_def) ->
-      (c.name ^ "$descriptor", (Op.Cst 0) ::
-                (List.fold_right
-                  (fun (n, (m : typ function_def)) s ->
-                    Op.Label (m.name ^ "$" ^ n) :: s)
-                  (Classe.merge_methods envm prog c) []))
+      
+      (c.name ^ "$descriptor",
+        (match c.parent with
+        | None   -> Op.Cst 0
+        | Some c -> Op.Label (c ^ "$descriptor")) ::
+          (List.fold_right
+            (fun (n, (m : typ function_def)) s ->
+              Op.Label (m.name ^ "$" ^ n) :: s)
+            (Classe.merge_methods envm prog c) []))
     ) prog.classes
   in
 

@@ -14,6 +14,7 @@ let rec type_to_string = function
   | TBool     -> "bool"
   | TArray t  -> Printf.sprintf "%s array" (type_to_string t)
   | TClass c  -> String.capitalize_ascii c
+  | TParent c -> type_to_string c
   | TVoid     -> "()"
 
 let raise_type_error l s =

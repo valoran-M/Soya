@@ -5,8 +5,9 @@ type location =
 type typ =
   | TInt 
   | TBool
-  | TClass of string
-  | TArray of typ
+  | TClass  of string
+  | TParent of typ
+  | TArray  of typ
   | TVoid (* not an actual type in the source language, but having it in
              the AST makes the code more uniform *)
 
@@ -27,6 +28,7 @@ and 'a expr =
   | NewTab of typ * 'a expression (* create an array of the given type and size *)
   | Read  of 'a mem               (* read in memory *)
   | This (* current object *)
+  | Super
 and 'a mem =
   | Arr of 'a expression * 'a expression (* array access     e1[e2]  *)
   | Atr of 'a expression * string        (* attribute access  o.x    *)

@@ -23,7 +23,7 @@
 %token <string> IDENT
 %token TYP_INT TYP_BOOL TYP_VOID
 %token VAR FUNCTION
-%token ATTRIBUTE METHOD EXTENDS CLASS THIS
+%token ATTRIBUTE METHOD EXTENDS CLASS THIS SUPER
 %token DOT NEW LBRACKET RBRACKET
 %token LPAR RPAR BEGIN END COMMA SEMI
 %token PUTCHAR SET IF ELSE WHILE RETURN
@@ -54,9 +54,9 @@ program:
 ;
 
 decl:
-| c=class_def { classes := c :: !classes }
+| c=class_def     { classes := c :: !classes }
 | v=variable_decl { let id, ty = v in globals := (id, ty) :: !globals }
-| f=function_def { functions := f :: !functions }
+| f=function_def  { functions := f :: !functions }
 ;
 
 
@@ -102,39 +102,44 @@ fun_def:
 
 instruction:
 | PUTCHAR LPAR e=expression RPAR SEMI { Putchar(e) }
-| id=IDENT SET e=expression SEMI { Set(id, e) }
+| id=IDENT SET e=expression SEMI      { Set(id, e) }
+| e=expression SEMI                   { Expr(e) }
+| m=mem_access SET e=expression SEMI  { Write(m, e) }
+| RETURN e=expression SEMI            { Return(e) }
 | IF LPAR c=expression RPAR
     BEGIN s1=list(instruction) END
-    ELSE BEGIN s2=list(instruction) END { If(c, s1, s2) }
+    ELSE BEGIN s2=list(instruction) END   { If(c, s1, s2) }
 | WHILE LPAR c=expression RPAR
-    BEGIN s=list(instruction) END { While(c, s) }
-| RETURN e=expression SEMI { Return(e) }
-| e=expression SEMI { Expr(e) }
-| m=mem_access SET e=expression SEMI { Write(m, e) }
+    BEGIN s=list(instruction) END         { While(c, s) }
 ;
 
 mem_access:
 | e1=expression LBRACKET e2=expression RBRACKET { Arr(e1, e2) }
-| e=expression DOT id=IDENT { Atr(e, id) }
+| e=expression DOT id=IDENT                     { Atr(e, id) }
 ;
 
 expression:
-| n=CST { mk_expr $sloc (Cst n) }
-| b=BOOL { mk_expr $sloc (Bool b) }
-| id=IDENT { mk_expr $sloc (Var id) }
-| LPAR e=expression RPAR { e }
-| e1=expression op=binop e2=expression { mk_expr $sloc (Binop(op, e1, e2)) }
-| f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr $sloc (Call(f, params)) }
-| e=expression DOT f=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr $sloc (MCall(e, f, params)) }
-| NEW id=IDENT LPAR params=separated_list(COMMA, expression) RPAR { mk_expr $sloc (New(id, params)) }
-| NEW LBRACKET ty=typ COMMA e=expression RBRACKET { mk_expr $sloc (NewTab(ty, e)) }
-| m=mem_access { mk_expr $sloc (Read m) }
-| THIS { mk_expr $sloc (This) }
+| n=CST                                 { mk_expr $sloc (Cst n) }
+| b=BOOL                                { mk_expr $sloc (Bool b) }
+| id=IDENT                              { mk_expr $sloc (Var id) }
+| LPAR e=expression RPAR                { e }
+| THIS                                  { mk_expr $sloc (This) }
+| SUPER                                 { mk_expr $sloc (Super) }
+| m=mem_access                          { mk_expr $sloc (Read m) }
+| e1=expression op=binop e2=expression  { mk_expr $sloc (Binop(op, e1, e2)) }
+| f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
+  { mk_expr $sloc (Call(f, params)) }
+| e=expression DOT f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
+  { mk_expr $sloc (MCall(e, f, params)) }
+| NEW id=IDENT LPAR params=separated_list(COMMA, expression) RPAR
+  { mk_expr $sloc (New(id, params)) }
+| NEW LBRACKET ty=typ COMMA e=expression RBRACKET
+  { mk_expr $sloc (NewTab(ty, e)) }
 ;
 
 %inline binop:
-| PLUS { Lang.Imp.Add }
-| STAR { Lang.Imp.Mul }
-| LT { Lang.Imp.Lt }
+| PLUS  { Lang.Imp.Add }
+| STAR  { Lang.Imp.Mul }
+| LT    { Lang.Imp.Lt }
 ;
 
