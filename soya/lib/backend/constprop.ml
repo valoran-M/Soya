@@ -85,16 +85,17 @@ let init_const (f : pseudo function_def) =
     let c_out  = Env.fold (fun p c c_out ->
       if List.mem p rd then c_out
       else
-        match Env.find p c_out with
-        | NConst -> c_out
-        | Ninit  ->
+        match Env.find p c_out, c with
+        | NConst, _ -> c_out
+        | Ninit,  _  ->
           if c = Ninit
           then c_out
-          else (modify := true; Env.add p c c_out)
-        | Const _ as co ->
-          if c = co
+          else (modify := true; Env.add p NConst c_out)
+        | Const c1, Const c2 ->
+          if c1 = c2
           then c_out
           else (modify := true; Env.add p NConst c_out)
+        | Const _, _ -> modify := true; Env.add p NConst c_out
     ) c d in
     !modify, c_out
   in
