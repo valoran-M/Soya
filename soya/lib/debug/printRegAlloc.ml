@@ -5,6 +5,7 @@ let file = ref ""
 
 let reg = PrintRTL.print_pseudo_reg
 
+let first_clive = ref true 
 let first_live = ref true 
 let first_alloc = ref true 
 let first_def_use = ref true 
@@ -13,12 +14,15 @@ let gen_ppf fname ext =
   if !debug then (
     let file = Filename.remove_extension !file ^ ext in
     let out =
-      if (ext = ".liveness" && !first_live) || (ext = ".alloc" && !first_alloc)
+      if (ext = ".liveness" && !first_live)
+         || (ext = ".alloc" && !first_alloc)
          || (ext = ".def_use" && !first_def_use)
+         || (ext = ".cliveness" && !first_clive)
       then open_out file
       else open_out_gen [Open_append] 0o644 file
     in
     if ext = ".liveness" then first_live := false;
+    if ext = ".cliveness" then first_clive := false;
     if ext = ".alloc" then first_alloc := false;
     if ext = ".def_use" then first_def_use := false;
     let outf = Format.formatter_of_out_channel out in

@@ -26,6 +26,12 @@ let call_convention rtl =
   then Debug.PrintRTL.print_reg_rtl rtl !Option.output_file ".rtl2";
   rtl
 
+let dead_node rtl =
+  let rtl = Backend.Dead_node.tr_program rtl in
+  if !Option.debug_rtl
+  then Debug.PrintRTL.print_reg_rtl rtl !Option.output_file ".rtl3";
+  rtl
+
 let rtl_to_ltl rtl =
   let ltl = Backend.Rtl2ltl.tr_program rtl in
   if !Option.debug_ltl
@@ -55,6 +61,7 @@ let () =
   let rtl = imp_to_rtl      imp in
   let rtl = const_prop      rtl in
   let rtl = call_convention rtl in
+  let rtl = dead_node       rtl in
   let ltl = rtl_to_ltl      rtl in
   let lin = ltl_to_lin      ltl in
   let asm = lin_to_prog     lin in

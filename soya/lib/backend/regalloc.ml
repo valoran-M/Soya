@@ -79,7 +79,12 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] args;
         init id n
-      | ILoad (_, rd, n) -> (* forall AddrReg r, r = rd *)
+      | ILoad (AddrReg r, rd, n) ->
+        incr_reg r; incr_reg rd;
+        add_succ id n;
+        add_def_use id [rd] [r];
+        init id n
+      | ILoad (_, rd, n) ->
         incr_reg rd;
         add_succ id n;
         add_def_use id [rd] [];
@@ -99,9 +104,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [] [r];
         init id n
-      | ICall (_, args, _, _, n) ->
-        let nb_args = List.length args in
-        List.iter incr_reg args;
+      | ICall (_, _, nb_args, _, n) ->
         add_succ id n;
         add_def_use id (Real ra :: Regs.caller_saved)
           (Real v0 :: Util.get_k_first (min 4 nb_args)
@@ -117,7 +120,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         incr_reg r;
         add_def_use id [] (Real v0 :: Regs.callee_saved)
       | IReturn None ->
-        add_def_use id [] Regs.callee_saved
+        add_def_use id [] (Real v0 :: Regs.callee_saved)
       | IGoto n ->
         add_succ id n;
         init id n)

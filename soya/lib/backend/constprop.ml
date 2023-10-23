@@ -22,8 +22,8 @@ let init_const (f : pseudo function_def) =
     | _ -> a
   in
   let regs = Hashtbl.fold (fun _ i l -> inst_regs i l) f.code [] in
-  let env = List.fold_left (fun e r -> Env.add r Ninit e) Env.empty f.params in
-  let env = List.fold_left (fun e r -> Env.add r Ninit e) env regs in
+  let env = List.fold_left (fun e r -> Env.add r NConst e) Env.empty f.params in
+  let env = List.fold_left (fun e r -> Env.add r Ninit  e) env regs in
 
   let in_out = Hashtbl.create (Hashtbl.length f.code) in
   Hashtbl.iter (fun i _ -> Hashtbl.add in_out i (env, env)) f.code;
@@ -60,7 +60,8 @@ let init_const (f : pseudo function_def) =
     match i with
     | IOp (op, args, r, _) -> compute_op op r args c_in
     | IMove (rd, r, _)     -> Some (rd, (Env.find r env))
-    | IGetParam (r, _, _, _) | ILoad (_, r, _) -> Some (r, NConst)
+    | IGetParam (r, _, _, _) | ILoad (_, r, _)
+    | ICall (_, _, _, Some r, _) -> Some (r, NConst)
     | _ -> None
   in
 
@@ -80,23 +81,38 @@ let init_const (f : pseudo function_def) =
   let file = Queue.create () in
   Hashtbl.iter (fun id _ -> Queue.add id file) f.code;
 
+  let print_reg = function
+    Pseudo r -> Printf.printf "x%d" r
+  in
+
+  let print_const = function
+    | NConst  -> Printf.printf "NConst"
+    | Ninit   -> Printf.printf "Ninit"
+    | Const c -> Printf.printf "%d" c
+  in
+
   let merge_env c d rd =
+    (* Printf.printf "\n"; *)
     let modify = ref false in
     let c_out  = Env.fold (fun p c c_out ->
       if List.mem p rd then c_out
       else
         match Env.find p c_out, c with
         | NConst, _ -> c_out
-        | Ninit,  _  ->
+        | Ninit,  _ ->
+          (* print_reg p; *)
+          (* Printf.printf " "; *)
           if c = Ninit
           then c_out
-          else (modify := true; Env.add p NConst c_out)
+          else (modify := true; Env.add p c c_out)
         | Const c1, Const c2 ->
           if c1 = c2
           then c_out
           else (modify := true; Env.add p NConst c_out)
-        | Const _, _ -> modify := true; Env.add p NConst c_out
+        | Const _, Ninit  -> c_out
+        | Const _, NConst -> modify := true; Env.add p NConst c_out
     ) c d in
+    (* Printf.printf "\n"; *)
     !modify, c_out
   in
 
@@ -106,24 +122,28 @@ let init_const (f : pseudo function_def) =
     | Some id ->
       let c_in, c_out = Hashtbl.find in_out id in
       let i = Hashtbl.find f.code id in
-      let m, c_out =
+      let _, c_out =
+        Printf.printf "\t%d : " id;
         match evaluate_node i c_in with
         | None         -> merge_env c_in c_out []
-        | Some (rd, v) -> merge_env c_in (Env.add rd v c_out) [rd]
+        | Some (rd, v) ->
+          print_reg rd; Printf.printf " "; print_const v;
+          merge_env c_in (Env.add rd v c_out) [rd]
       in
-      if m then(
-        let succ = get_succ i in
-        List.iter (fun sid ->
-          let c_in, c_out' = Hashtbl.find in_out sid in
-          let m, c_in = merge_env c_out c_in [] in
-          if m then (
-            Queue.add sid file;
-            Hashtbl.replace in_out sid (c_in, c_out'))
-        ) succ
-      );
+      let succ = get_succ i in
+      List.iter (fun sid ->
+        let c_in, c_out' = Hashtbl.find in_out sid in
+        let m, c_in = merge_env c_out c_in [] in
+        Printf.printf "\t%d" sid;
+        if m then (
+          Queue.add sid file;
+          Hashtbl.replace in_out sid (c_in, c_out'))
+      ) succ;
+      print_newline ();
       const_assgn ()
   in
 
+  Printf.printf "%s\n" f.name;
   const_assgn ();
   in_out
 

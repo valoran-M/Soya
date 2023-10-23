@@ -40,7 +40,8 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let r = new_reg () in
       tr_expression e (Some r) (push_node (IAlloc (r, Some reg, dest)))
     | Deref e, Some reg ->
-       tr_expression e (Some reg) (push_node (ILoad ((AddrReg reg), reg, dest)))
+      let r = new_reg () in
+      tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, dest)))
     | Var  v, Some reg ->
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
