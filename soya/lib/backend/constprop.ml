@@ -122,7 +122,6 @@ let init_const (f : pseudo function_def) =
           Queue.add sid file;
           Hashtbl.replace in_out sid (c_in, c_out'))
       ) succ;
-      print_newline ();
       const_assgn ()
   in
   const_assgn ();

@@ -36,13 +36,8 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
 
   (* pred and succ array *)
   let pred_succ = Hashtbl.create 32 in
-  (* Hashtbl.iter (fun id _ -> *)
-  (*   Printf.printf "%d " id; *)
-  (*   Hashtbl.replace pred_succ id ([], [])) rtl_fun.code; *)
-  (* print_newline (); *)
   let add_pred id pred =
     if pred >= 0 then (
-      (* Printf.printf "%d\n" id; *)
       match Hashtbl.find_opt pred_succ id with
       | None        -> Hashtbl.replace pred_succ id ([pred],    [])
       | Some (p, s) -> Hashtbl.replace pred_succ id (pred :: p, s ))
