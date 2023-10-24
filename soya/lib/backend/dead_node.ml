@@ -28,7 +28,7 @@ let tr_program (prog : pseudo_reg program) =
     let rec tr_instruction i =
       match Hashtbl.find_opt id_env i with
       | Some i' -> i'
-      | None ->
+      | None    ->
         let nid = new_node () in
         Hashtbl.add id_env i nid;
         let bid = match Hashtbl.find f.code i with
@@ -40,8 +40,8 @@ let tr_program (prog : pseudo_reg program) =
           | IStore(a,r,n)     -> push_node (IStore(a,r,tr_instruction n))
           | ICall(id,lr,a,r,n)-> push_node (ICall (id,lr,a,r,tr_instruction n))
           | IReturn r         -> push_node (IReturn r)
-          | ISetParam(r,i,p,n)-> push_node (ISetParam (r,i,p,n))
-          | IGetParam(r,i,p,n)-> push_node (IGetParam (r,i,p,n))
+          | ISetParam(r,i,p,n)-> push_node (ISetParam (r,i,p, tr_instruction n))
+          | IGetParam(r,i,p,n)-> push_node (IGetParam (r,i,p, tr_instruction n))
           (* const_prop *)
           | IMove(rd,r,n)     -> tr_move rd r i (tr_instruction n)
           | IOp(op,rl,r,n)    -> tr_op op rl r i (tr_instruction n)

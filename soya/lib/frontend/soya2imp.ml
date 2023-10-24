@@ -73,14 +73,14 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | MCall (o, s, args)  ->
       let c = tr_expression o in
       let args = c :: (List.map tr_expression args) in
-      let f = Imp.Binop (Add, deref_methode_call o.annot c,
+      let f = Imp.Binop (Add, deref_method_call o.annot c,
                               Cst (get_method_offset o.annot s)) in
       Imp.DCall (Deref f, args)
   
-  and deref_methode_call t c =
+  and deref_method_call t c =
     match t with
     | TClass _  -> Imp.Deref c
-    | TParent p -> Imp.Deref (deref_methode_call p c)
+    | TParent p -> Imp.Deref (deref_method_call p c)
     | _ -> assert false
 
   and tr_mem (m : typ mem) : Imp.expression =

@@ -34,7 +34,7 @@ let init_const (f : pseudo function_def) =
     | Const c -> Some (rd, (Const (f i c)))
     | NConst  -> Some (rd, NConst)
   in
-
+  
   let two_reg r1 r2 rd f c_in =
     match Env.find r1 c_in, Env.find r2 c_in with
     | Ninit, _  | _, Ninit  -> Some (rd, Ninit)
@@ -59,7 +59,7 @@ let init_const (f : pseudo function_def) =
   let evaluate_node (i: pseudo instruction) c_in =
     match i with
     | IOp (op, args, r, _) -> compute_op op r args c_in
-    | IMove (rd, r, _)     -> Some (rd, (Env.find r env))
+    | IMove (rd, r, _)     -> Some (rd, (Env.find r c_in))
     | IGetParam (r, _, _, _) | ILoad (_, r, _)
     | ICall (_, _, _, Some r, _) -> Some (r, NConst)
     | _ -> None
@@ -113,6 +113,7 @@ let init_const (f : pseudo function_def) =
         | None         -> merge_env c_in c_out []
         | Some (rd, v) -> merge_env c_in (Env.add rd v c_out) [rd]
       in
+      Hashtbl.replace in_out id (c_in, c_out);
       let succ = get_succ i in
       List.iter (fun sid ->
         let c_in, c_out' = Hashtbl.find in_out sid in
@@ -121,9 +122,9 @@ let init_const (f : pseudo function_def) =
           Queue.add sid file;
           Hashtbl.replace in_out sid (c_in, c_out'))
       ) succ;
+      print_newline ();
       const_assgn ()
   in
-
   const_assgn ();
   in_out
 

@@ -26,6 +26,7 @@ let print_function ppf f print_reg =
     | a :: args -> fprintf ppf "%a, %a" print_reg a print_arg args
   in
 
+  Printf.printf "%s\n" f.name;
   let see = Hashtbl.create 16 in
   let rec print_instruction ppf id =
     if not (Hashtbl.mem see id) then (
