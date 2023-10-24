@@ -70,7 +70,14 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | New (c, args)       -> Call("constructor$"^c,List.map tr_expression args)
     | NewTab (t, e)       -> Alloc(Binop(Mul,tr_expression e,Cst(type_size t)))
     | Super               -> Var "this"
-    | MCall (o, s, args)  ->
+    | MCall (o, s, args)  -> tr_mcall o s args
+
+  and tr_mcall o s args =
+    match o.expr with
+    | Super | This ->
+      let c = type_to_class o.annot in
+      Call (s ^ "$" ^ c.name, Var "this" :: List.map tr_expression args)
+    | _ ->
       let c = tr_expression o in
       let args = c :: (List.map tr_expression args) in
       let f = Imp.Binop (Add, deref_method_call o.annot c,
