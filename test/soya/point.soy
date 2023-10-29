@@ -1,6 +1,8 @@
+
 class point {
   attribute int x;
   attribute int y;
+
   method void constructor(int x, int y) {
     this.x = x;
     this.y = y;
@@ -11,10 +13,8 @@ class point {
 }
 
 function void main() {
-  var point p;
-  var int c;
-  p = new point(1, 2);
-  c = p.sum(48);
+  point p = new point(1, 2);
+  int c = p.sum(48);
   putchar(c);
 }
 

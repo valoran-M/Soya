@@ -96,9 +96,17 @@ method_def:
 
 fun_def:
 | return=typ name=IDENT LPAR params=separated_list(COMMA, typed_ident) RPAR
-    BEGIN locals=list(variable_decl) code=list(instruction) END
-    { {name; code; params; return; locals} }
+    BEGIN c=code END
+    { let locals, code = c in
+      {name; code; params; return; locals} }
 ;
+
+code:
+| {[], []}
+| VAR tid=typed_ident SEMI c=code       { tid :: fst c,      snd c }
+| i=instruction c=code                  {        fst c, i :: snd c }
+| tid=typed_ident SET e=expression SEMI c=code
+    { tid :: fst c, Set (fst tid, e) :: snd c }
 
 instruction:
 | PUTCHAR LPAR e=expression RPAR SEMI { Putchar(e) }
