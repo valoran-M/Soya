@@ -14,8 +14,7 @@ class point3 extends point {
   attribute int z;
 
   method void constructor(int x, int y, int z) {
-    this.x = x;
-    this.y = y;
+    super.constructor(x, y);
     this.z = z;
   }
 
@@ -28,9 +27,7 @@ class point4 extends point3 {
   attribute int w;
 
   method void constructor(int x, int y, int z, int w) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
+    super.constructor(x, y, z);
     this.w = w;
   }
 

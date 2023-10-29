@@ -6,6 +6,14 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     List.find (fun s -> s.name = st) prog.classes
   in
 
+  let env = ref [] in
+  let new_var =
+    let i = ref 0 in
+    fun c -> incr i;
+      let n = c ^ string_of_int !i in
+      env := n :: !env; n
+  in
+
   let rec type_to_class t =
     match t with
     | TClass c -> get_class c
@@ -58,31 +66,46 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | None -> assert false
   in
 
-  let rec tr_expression (e : typ expression) : Imp.expression =
+  let rec tr_expression e : Imp.expression * (string * Soya.typ) list =
     match e.expr with
-    | Cst c               -> Cst c
-    | Bool b              -> Bool b
-    | Var v               -> Var v
-    | Binop (op, e1, e2)  -> Binop (op, tr_expression e1, tr_expression e2)
-    | Call (f, a)         -> Call (f, List.map tr_expression a)
-    | Read m              -> Deref (tr_mem m)
-    | This                -> Var "this"
-    | New (c, args)       -> Call("constructor$"^c,List.map tr_expression args)
-    | NewTab (t, e)       -> Alloc(Binop(Mul,tr_expression e,Cst(type_size t)))
-    | Super               -> Var "this"
+    | Cst c               -> Cst c,  []
+    | Bool b              -> Bool b, []
+    | Var v               -> Var v,  []
+    | Binop (op, e1, e2)  ->
+      let e1, d1 = tr_expression e1 in
+      let e2, d2 = tr_expression e2 in
+      Binop (op, e1, e2), d1 @ d2
+    | Call (f, a)         -> let a, d = tr_args a in Call (f, a), d
+    | This                -> Var "this", []
+    | Super               -> Var "this", []
     | MCall (o, s, args)  -> tr_mcall o s args
+    | Read m              -> let m, d = tr_mem m in Deref (m), d
+    | New (c, args)       ->
+      let a, d = tr_args args in
+      let v = new_var c in
+      Call("constructor$"^c, Var v :: a), (v, TClass c) :: d
+    | NewTab (t, e)       ->
+      let e, d= tr_expression e in
+      Alloc(Binop(Mul,e,Cst(type_size t))), d
+
+  and tr_args a =
+    List.fold_left (fun (a, d) e ->
+      let e, de = tr_expression e in
+      (e :: a, de @ d)
+    ) ([],[]) a
 
   and tr_mcall o s args =
     match o.expr with
     | Super | This ->
       let c = type_to_class o.annot in
-      Call (s ^ "$" ^ c.name, Var "this" :: List.map tr_expression args)
+      let a, d = tr_args args in
+      Call (s ^ "$" ^ c.name, Var "this" :: a), d
     | _ ->
-      let c = tr_expression o in
-      let args = c :: (List.map tr_expression args) in
+      let c, dc = tr_expression o in
+      let a, da = tr_args args in
       let f = Imp.Binop (Add, deref_method_call o.annot c,
                               Cst (get_method_offset o.annot s)) in
-      Imp.DCall (Deref f, args)
+      Imp.DCall (Deref f, c :: a), dc @ da
   
   and deref_method_call t c =
     match t with
@@ -90,59 +113,93 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | TParent p -> Imp.Deref (deref_method_call p c)
     | _ -> assert false
 
-  and tr_mem (m : typ mem) : Imp.expression =
+  and tr_mem (m : typ mem) =
     match m with
     | Arr (a, o) ->
       let case_size = type_size a.annot in
-      Binop (Add, tr_expression a,
-      Binop (Mul, Cst case_size, tr_expression o))
+      let a, da = tr_expression a in
+      let o, dob = tr_expression o in
+      Binop (Add, a,
+      Binop (Mul, Cst case_size, o)), da @ dob
     | Atr (st, f) ->
       match st.annot with
-      | TClass s -> Binop (Add, Cst (get_class_offset s f), tr_expression st)
+      | TClass s ->
+        let st, dst = tr_expression st in
+        Binop (Add, Cst (get_class_offset s f), st), dst
       | _        -> assert false
   in
 
-  let rec tr_instruction (i : typ instruction) : Imp.instruction =
+  let instr_to_seq d i =
+    List.fold_left (fun a (v, d) ->
+      let c = type_to_class d in
+      let size = field_size (get_class c.name) in
+      Imp.Set(v, Alloc (Cst size))
+      :: Write(Var v, Addr(c.name ^ "$" ^ "descriptor")) :: a
+    ) [i] d
+  in
+
+  let rec tr_instruction (i : typ instruction) : Imp.sequence =
     match i with
-    | Putchar c       -> Putchar (tr_expression c)
-    | Set (s, e)      -> Set (s, tr_expression e)
-    | If (c, e1, e2)  -> If (tr_expression c, tr_seq e1, tr_seq e2)
-    | While (c, e)    -> While (tr_expression c, tr_seq e)
-    | Return e        -> Return (tr_expression e)
-    | Expr e          -> Expr (tr_expression e)
-    | Write (m, e)    -> Write (tr_mem m, tr_expression e)
+    | Putchar c ->
+      let c, d = tr_expression c in
+      instr_to_seq d (Putchar c)
+    | Set (s, e) ->
+      let e, d = tr_expression e in
+      instr_to_seq d (Set (s, e))
+    | If (c, e1, e2) ->
+      let c, d = tr_expression c in
+      instr_to_seq d (If (c, tr_seq e1, tr_seq e2))
+    | While (c, e)   ->
+      let c, d = tr_expression c in
+      instr_to_seq d (While (c, tr_seq e))
+    | Return e       ->
+      let e, d = tr_expression e in
+      instr_to_seq d (Return e)
+    | Expr e         ->
+      let e, d = tr_expression e in
+      instr_to_seq d (Expr e)
+    | Write (m, e)   ->
+      let m, dm = tr_mem m in
+      let e, de = tr_expression e in
+      instr_to_seq (dm @ de) (Write (m, e))
   and tr_seq s =
-    List.map tr_instruction s
+    List.fold_left (fun s i -> s @ tr_instruction i) [] s
   in
 
   let tr_class (c : typ class_def) f : Imp.function_def list =
     let tr_method (f : typ function_def) : Imp.function_def =
-      if f.name = "constructor" then 
-        let size = field_size (get_class c.name) in
-        let code : Imp.sequence =
-          Imp.Set("this", Alloc (Cst size))
-          :: Write(Var "this", Addr(c.name ^ "$" ^ "descriptor"))
-          :: tr_seq f.code @ [Return (Var "this")]
-        in
-        { name = f.name ^ "$" ^ c.name;
-          params = List.map fst f.params;
-          locals = "this" :: List.map fst f.locals;
-          code; }
-      else
-        { name = f.name ^ "$" ^ c.name;
-          params = "this" :: List.map fst f.params;
-          locals = List.map fst f.locals;
-          code = tr_seq f.code; }
+      let code = tr_seq f.code in
+      let code =
+        if f.name = "constructor"
+        then code @ [Return (Var "this")]
+        else code
+      in
+      let nv = !env in
+      env := [];
+      { name = f.name ^ "$" ^ c.name;
+        params = "this" :: List.map fst f.params;
+        locals =  nv @ List.map fst f.locals;
+        code; }
+      (* else *)
+      (*   let nv = !env in *)
+      (*   env := []; *)
+      (*   { name = f.name ^ "$" ^ c.name; *)
+      (*     params = "this" :: List.map fst f.params; *)
+      (*     locals = nv @ List.map fst f.locals; *)
+      (*     code = tr_seq f.code; } *)
     in
     List.fold_left (fun f m -> tr_method m :: f) f c.methods
   in
 
   let tr_function (fdef : typ function_def) : Lang.Imp.function_def =
+    let code = tr_seq fdef.code in
+    let nv = !env in
+    env := [];
     {
       name = fdef.name;
       params = List.map fst fdef.params;
-      locals = List.map fst fdef.locals;
-      code = tr_seq fdef.code;
+      locals =  nv @ List.map fst fdef.locals;
+      code;
     }
   in
 

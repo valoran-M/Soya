@@ -211,18 +211,21 @@ let graph_coloring (f: pseudo_reg function_def) =
   let get_color n =
     let p, c = List.fold_left (fun (p, acc) (id, e) ->
       match e, id with
-      | Interference_graph.Preference, Real r -> (r :: p,  acc)
+      | Interference_graph.Preference, Real r ->
+        if List.mem r acc
+        then (r :: p,  acc)
+        else (p, acc)
       | Interference_graph.Preference, _ -> (p, acc)
       | Interference_graph.Interfere, _  ->
         match id with
-        | Real r -> p, List.filter (fun a -> a <> r) acc
+        | Real r ->
+          List.filter (fun a -> a <> r) p, List.filter (fun a -> a <> r) acc
         | _ ->
           match Hashtbl.find_opt color id with
           | None | Some (Spill _) -> (p, acc)
           | Some (Reg r) ->
-            p, List.filter (fun a -> a <> r) acc
+            List.filter (fun a -> a <> r) p, List.filter (fun a -> a <> r) acc
     ) ([], Regs.register) n in
-    (* let p = List.filter (fun r -> List.mem r c) p in *)
     match p, c with
     | r :: _, _   -> Some r
     | _, []       -> None
