@@ -70,7 +70,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     fst (List.fold_left (fun (dest, i) r ->
       if i < 4
       then push_node (IMove (reg r, nb_args_to_reg i, dest)), i+1
-      else push_node (IGetParam (reg r, (i - 3), pushed_args, dest)), i+1)
+      else push_node (IGetParam (reg r, (i - 4), pushed_args, dest)), i+1)
       (dest, 0) fdef.params
     )
   in
@@ -88,7 +88,7 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     let dest = push_node (ICall (id, [], nb_args, None, dest)) in
     fst (List.fold_left (fun (dest, i) r ->
       if i < 4 then (push_node (IMove(nb_args_to_reg i, reg r, dest)),i+1)
-               else (push_node (ISetParam(reg r, i - 3, pushed_args, dest)),i+1)
+               else (push_node (ISetParam(reg r, i - 4, pushed_args, dest)),i+1)
       ) (dest, 0) args)
   in
 

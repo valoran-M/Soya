@@ -131,6 +131,8 @@ expression:
   { mk_expr $sloc (Call(f, params)) }
 | e=expression DOT f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
   { mk_expr $sloc (MCall(e, f, params)) }
+| SUPER LPAR params=separated_list(COMMA, expression) RPAR
+  { mk_expr $sloc (MCall((mk_expr $sloc Super), "constructor", params)) }
 | NEW id=IDENT LPAR params=separated_list(COMMA, expression) RPAR
   { mk_expr $sloc (New(id, params)) }
 | NEW LBRACKET ty=typ COMMA e=expression RBRACKET

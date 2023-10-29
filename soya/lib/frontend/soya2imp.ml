@@ -180,14 +180,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
         params = "this" :: List.map fst f.params;
         locals =  nv @ List.map fst f.locals;
         code; }
-      (* else *)
-      (*   let nv = !env in *)
-      (*   env := []; *)
-      (*   { name = f.name ^ "$" ^ c.name; *)
-      (*     params = "this" :: List.map fst f.params; *)
-      (*     locals = nv @ List.map fst f.locals; *)
-      (*     code = tr_seq f.code; } *)
-    in
+      in
     List.fold_left (fun f m -> tr_method m :: f) f c.methods
   in
 

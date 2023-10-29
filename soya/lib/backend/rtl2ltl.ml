@@ -119,13 +119,13 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     | None -> dest
     | Some n -> push_node (ILoad (spill_addr n, Mips.t8, dest))
   and tr_get_param regs i nb_pushed dest =
-    let addr = AddrStack ((i - nb_pushed) * 4 - stack_size) in
+    let addr = AddrStack ((i + 1 - nb_pushed) * 4 + stack_size) in
     match get_reg regs with
     | Reg r   -> push_node (ILoad (addr, r, dest))
     | Spill n -> push_node (ILoad (addr, Mips.t8, push_node
                            (IStore (spill_addr n, Mips.t8, dest))))
   and tr_set_param regs i nb_pushed dest =
-    let addr = AddrStack ((i - nb_pushed) * 4) in
+    let addr = AddrStack ((i + 1 - nb_pushed) * 4) in
     match get_reg regs with
     | Reg r   -> push_node (IStore (addr, r, dest))
     | Spill n -> push_node (ILoad (addr, Mips.t8, push_node
