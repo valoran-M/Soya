@@ -45,6 +45,7 @@ rule token = parse
   | "/*"                  { comment lexbuf; token lexbuf }
   | number as n           { CST(int_of_string n) }
   | ident as id           { keyword_or_ident id }
+  | "'" _ as c "'"        { CHAR (c.[1]) }
   | ";"   { SEMI }
   | "="   { SET }
   | "+"   { PLUS }

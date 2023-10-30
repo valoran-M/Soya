@@ -18,6 +18,7 @@
 %token PLUS STAR
 %token LT
 
+%token <char> CHAR
 %token <int> CST
 %token <bool> BOOL
 %token <string> IDENT
@@ -128,6 +129,7 @@ mem_access:
 ;
 
 expression:
+| c=CHAR                                { mk_expr $sloc (Char (Char.code c)) }
 | n=CST                                 { mk_expr $sloc (Cst n) }
 | b=BOOL                                { mk_expr $sloc (Bool b) }
 | id=IDENT                              { mk_expr $sloc (Var id) }
