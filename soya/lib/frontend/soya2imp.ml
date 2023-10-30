@@ -23,7 +23,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let rec type_size (t : typ) =
     match t with
-    | TChar -> 4
+    | TChar -> 1
     | TInt | TBool -> 4
     | TVoid     -> 0
     | TArray t  -> type_size t
@@ -82,7 +82,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | This                -> Var "this", []
     | Super               -> Var "this", []
     | MCall (o, s, args)  -> tr_mcall o s args
-    | Read m              -> let m, d = tr_mem m in Deref (m), d
+    | Read m              -> let m, s, d = tr_mem m in Deref (m, s), d
     | New (c, args)       ->
       let a, d = tr_args args in
       let v = new_var c in
@@ -108,12 +108,12 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let a, da = tr_args args in
       let f = Imp.Binop (Add, deref_method_call o.annot c,
                               Cst (get_method_offset o.annot s)) in
-      Imp.DCall (Deref f, c :: a), dc @ da
+      Imp.DCall (Deref (f, Word), c :: a), dc @ da
   
   and deref_method_call t c =
     match t with
-    | TClass _  -> Imp.Deref c
-    | TParent p -> Imp.Deref (deref_method_call p c)
+    | TClass _  -> Imp.Deref (c, Word)
+    | TParent p -> Imp.Deref (deref_method_call p c, Word)
     | _ -> assert false
 
   and tr_mem (m : typ mem) =
@@ -122,13 +122,14 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let case_size = type_size a.annot in
       let a, da = tr_expression a in
       let o, dob = tr_expression o in
+      let size = if case_size = 1 then Op.Byte else Op.Word in
       Binop (Add, a,
-      Binop (Mul, Cst case_size, o)), da @ dob
+      Binop (Mul, Cst case_size, o)), size, da @ dob
     | Atr (st, f) ->
       match st.annot with
       | TClass s ->
         let st, dst = tr_expression st in
-        Binop (Add, Cst (get_class_offset s f), st), dst
+        Binop (Add, Cst (get_class_offset s f), st), Word, dst
       | _        -> assert false
   in
 
@@ -137,7 +138,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let c = type_to_class d in
       let size = field_size (get_class c.name) in
       Imp.Set(v, Alloc (Cst size))
-      :: Write(Var v, Addr(c.name ^ "$" ^ "descriptor")) :: a
+      :: Write(Var v, Word, Addr(c.name ^ "$" ^ "descriptor")) :: a
     ) [i] d
   in
 
@@ -162,9 +163,9 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let e, d = tr_expression e in
       instr_to_seq d (Expr e)
     | Write (m, e)   ->
-      let m, dm = tr_mem m in
+      let m, s, dm = tr_mem m in
       let e, de = tr_expression e in
-      instr_to_seq (dm @ de) (Write (m, e))
+      instr_to_seq (dm @ de) (Write (m, s, e))
   and tr_seq s =
     List.fold_left (fun s i -> s @ tr_instruction i) [] s
   in

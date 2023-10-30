@@ -8,7 +8,7 @@ type expression =
   | Binop of binop  * expression * expression
   | Call  of string * expression list
   | DCall of expression * expression list
-  | Deref of expression
+  | Deref of expression * Op.mem_size
   | Alloc of expression
   | Addr  of string
 
@@ -19,7 +19,7 @@ type instruction =
   | While   of expression * sequence
   | Return  of expression
   | Expr    of expression
-  | Write   of expression * expression
+  | Write   of expression * Op.mem_size * expression
 
 
 and sequence = instruction list

@@ -35,19 +35,30 @@ let tr_function (fdef : Linear.function_def) =
     | _ -> assert false
   in
 
-  let tr_load a r =
-    match a with
-    | Addr l      -> la r l @@ lw r 0 r
-    | AddrReg ra  -> lw r 0 ra
-    | AddrGlobl l -> la r l @@ lw r 0 r
-    | AddrStack i -> lw r i sp
+  let size_load size =
+    match size with
+    | Word -> lw
+    | Byte -> lbu
   in
-  let tr_store a r =
+  let tr_load a r s =
     match a with
-    | Addr l      -> la t9 l @@ sw r 0 t9
-    | AddrReg ra  -> sw r 0 ra
-    | AddrGlobl l -> la t9 l @@ sw r 0 t9
-    | AddrStack i -> sw r i sp
+    | Addr l      -> la r l @@ (size_load s) r 0 r
+    | AddrReg ra  -> (size_load s) r 0 ra
+    | AddrGlobl l -> la r l @@ (size_load s) r 0 r
+    | AddrStack i -> (size_load s) r i sp
+  in
+
+  let size_store size =
+    match size with
+    | Word -> sw
+    | Byte -> sb
+  in
+  let tr_store a r s =
+    match a with
+    | Addr l      -> la t9 l @@ (size_store s) r 0 t9
+    | AddrReg ra  -> (size_store s) r 0 ra
+    | AddrGlobl l -> la t9 l @@ (size_store s) r 0 t9
+    | AddrStack i -> (size_store s) r i sp
   in
 
   let tr_call a =
@@ -68,8 +79,8 @@ let tr_function (fdef : Linear.function_def) =
       li v0 9
       @@ syscall
     | Linear.LMove (rd, r) -> move rd r
-    | Linear.LLoad (a, _, l) -> tr_load a l
-    | Linear.LStore (a, _, l) -> tr_store a l
+    | Linear.LLoad (a, s, l) -> tr_load a l s
+    | Linear.LStore (a, s, l) -> tr_store a l s
     | Linear.LPush r -> push r
     | Linear.LOp (op, args, r) -> tr_op op args r
     | Linear.LCond (c, args, l) -> tr_cond c args l
