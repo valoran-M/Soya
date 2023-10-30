@@ -13,10 +13,11 @@ let pop  reg =
 let tr_function (fdef : Linear.function_def) =
   let tr_op op args r =
     match op, args with
+    | OChar n,   []       -> li r n
     | OConst n,  []       -> li r n
     | OLabel l,  []       -> la r l
-    | OAddImm n, [r1]     -> addi r r1 n
-    | OMulImm n, [r1]     -> addi r r1 n
+    | OAddImm n, [r1]     -> if r = r1 && n = 0 then nop else addi r r1 n
+    | OMulImm n, [r1]     -> if r = r1 && n = 1 then nop else muli r r1 n
     | OAdd,      [r1; r2] -> add r r1 r2
     | OMul,      [r1; r2] -> mul r r1 r2
     | OLt,       [r1; r2] -> slt r r1 r2
@@ -67,8 +68,8 @@ let tr_function (fdef : Linear.function_def) =
       li v0 9
       @@ syscall
     | Linear.LMove (rd, r) -> move rd r
-    | Linear.LLoad (a, l) -> tr_load a l
-    | Linear.LStore (a, l) -> tr_store a l
+    | Linear.LLoad (a, _, l) -> tr_load a l
+    | Linear.LStore (a, _, l) -> tr_store a l
     | Linear.LPush r -> push r
     | Linear.LOp (op, args, r) -> tr_op op args r
     | Linear.LCond (c, args, l) -> tr_cond c args l

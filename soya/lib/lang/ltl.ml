@@ -9,8 +9,8 @@ type instruction =
   | IAlloc   of reg * node
   | IMove    of reg * reg * node
   | IOp      of operation * reg list * reg * node
-  | ILoad    of reg address * reg * node
-  | IStore   of reg address * reg * node
+  | ILoad    of reg address * reg * mem_size * node
+  | IStore   of reg address * reg * mem_size * node
   | ICall    of reg Op.address * int * node
   | ICond    of condition * reg list * node * node
   | IReturn  of reg option

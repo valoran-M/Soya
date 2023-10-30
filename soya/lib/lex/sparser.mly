@@ -21,7 +21,7 @@
 %token <int> CST
 %token <bool> BOOL
 %token <string> IDENT
-%token TYP_INT TYP_BOOL TYP_VOID
+%token TYP_INT TYP_BOOL TYP_VOID TYP_CHAR
 %token VAR FUNCTION
 %token ATTRIBUTE METHOD EXTENDS CLASS THIS SUPER
 %token DOT NEW LBRACKET RBRACKET
@@ -79,7 +79,8 @@ typed_ident:
 ;
 
 typ:
-| TYP_INT { TInt }
+| TYP_CHAR { TChar }
+| TYP_INT  { TInt  }
 | TYP_BOOL { TBool }
 | TYP_VOID { TVoid }
 | LBRACKET ty=typ RBRACKET { TArray ty }

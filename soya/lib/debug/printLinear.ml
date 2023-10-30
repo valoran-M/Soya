@@ -24,10 +24,10 @@ let print_function ppf f print_reg =
       | LOp (op, args, rd) ->
         fprintf ppf "\t%a = %a\n" print_reg rd
           (PrintOp.print_op print_reg) (op, args);
-      | LLoad (addr, rd) -> 
+      | LLoad (addr, _, rd) -> 
         fprintf ppf "\t%a -> %a\n"
           (fun ppf -> PrintOp.print_addr ppf print_reg) addr print_reg rd;
-      | LStore (addr, rd) ->
+      | LStore (addr, _, rd) ->
         fprintf ppf "\t%a -> %a\n" print_reg rd
           (fun ppf -> PrintOp.print_addr ppf print_reg) addr;
       | LPush (rd) ->

@@ -16,7 +16,7 @@ let init_const (f : pseudo function_def) =
   let inst_regs (i : pseudo instruction) a =
     match i with
     | IOp (_, args, r, _) -> r :: args @ a
-    | ILoad (_, r, _)
+    | ILoad (_, r, _, _)
     | IGetParam (r, _, _, _) -> r :: a
     | IMove (rd, r, _) -> rd :: r :: a
     | _ -> a
@@ -45,6 +45,7 @@ let init_const (f : pseudo function_def) =
   let compute_op (op : Lang.Op.operation) rd args c_in =
     let open Lang.Op in
     match op, args with
+    | OChar  i,  []   -> Some (rd, (Const i))
     | OConst i,  []   -> Some (rd, (Const i))
     | OLabel _,  []   -> Some (rd, NConst)
     | OAddImm i, [r]  -> one_reg i r rd ( + ) c_in
@@ -60,7 +61,7 @@ let init_const (f : pseudo function_def) =
     match i with
     | IOp (op, args, r, _) -> compute_op op r args c_in
     | IMove (rd, r, _)     -> Some (rd, (Env.find r c_in))
-    | IGetParam (r, _, _, _) | ILoad (_, r, _)
+    | IGetParam (r, _, _, _) | ILoad (_, r, _, _)
     | ICall (_, _, _, Some r, _) -> Some (r, NConst)
     | _ -> None
   in
@@ -70,7 +71,7 @@ let init_const (f : pseudo function_def) =
     | INop d                 | IGoto d
     | IPutchar (_, d)        | IAlloc (_, _, d)
     | IMove (_, _, d)        | IOp (_, _, _, d)
-    | ILoad (_, _, d)        | IStore (_, _, d)
+    | ILoad (_, _, _, d)     | IStore (_, _, _, d)
     | ISetParam (_, _, _, d) | IGetParam (_, _, _, d)
     | ICall (_, _, _, _, d) -> [d]
     | ICond (_, _, d1, d2)  -> [d1; d2]
@@ -155,9 +156,9 @@ let tr_program (prog : pseudo program) =
           | INop n            -> push_node (INop (tr_instruction n))
           | IGoto n           -> push_node (IGoto (tr_instruction n))
           | IPutchar(r,n)     -> push_node (IPutchar (r,tr_instruction n))
-          | ILoad(a,r,n)      -> push_node (ILoad (a,r,tr_instruction n))
+          | ILoad(a,r,s,n)    -> push_node (ILoad (a,r,s,tr_instruction n))
           | IAlloc(r,d,n)     -> push_node (IAlloc (r,d,tr_instruction n))
-          | IStore(a,r,n)     -> push_node (IStore(a,r,tr_instruction n))
+          | IStore(a,r,s,n)   -> push_node (IStore(a,r,s,tr_instruction n))
           | ICall(id,lr,a,r,n)-> push_node (ICall (id,lr,a,r,tr_instruction n))
           | IReturn r         -> push_node (IReturn r)
           | ISetParam(r,i,p,n)-> push_node (ISetParam (r,i,p,n))
@@ -197,7 +198,9 @@ let tr_program (prog : pseudo program) =
       in
 
       match op, args with
-      | OConst _, [] | OLabel _, [] -> push_node (IOp (op, args, rd, dest))
+      | OChar _,  []
+      | OConst _, []
+      | OLabel _, []   -> push_node (IOp (op, args, rd, dest))
       | OAddImm i, [r] -> one_reg r i ( + )
       | OMulImm i, [r] -> one_reg r i ( * )
       | OAdd, [r1; r2]  ->

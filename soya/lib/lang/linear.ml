@@ -8,8 +8,8 @@ type instruction =
   | LPutchar  of reg
   | LAlloc    of reg
   | LMove     of reg * reg
-  | LLoad     of reg address * reg
-  | LStore    of reg address * reg
+  | LLoad     of reg address * mem_size * reg
+  | LStore    of reg address * mem_size * reg
   | LPush     of reg
   | LOp       of operation * reg list * reg
   | LCond     of condition * reg list *  label

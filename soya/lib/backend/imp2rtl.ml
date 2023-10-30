@@ -33,6 +33,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
 
   let rec tr_expression exp (reg : pseudo option) dest =
     match exp, reg with
+    | Char c, Some reg -> push_node (IOp ((OChar c), [], reg, dest))
     | Cst  n, Some reg -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b, Some reg -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
     | Addr l, Some reg -> push_node (IOp (OLabel l, [], reg, dest))
@@ -41,11 +42,11 @@ let tr_function (fdef : Lang.Imp.function_def) =
       tr_expression e (Some r) (push_node (IAlloc (r, Some reg, dest)))
     | Deref e, Some reg ->
       let r = new_reg () in
-      tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, dest)))
+      tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, Word, dest)))
     | Var  v, Some reg ->
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
-      | None    -> push_node (ILoad (AddrGlobl v, reg, dest)))
+      | None    -> push_node (ILoad (AddrGlobl v, reg, Word, dest)))
     | Binop (op, e1, e2), _ -> tr_binop op e1 e2 reg dest
     | DCall (e, le), _ ->
       let id_call = new_node () in
@@ -73,7 +74,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       Hashtbl.replace code id_call
         (ICall (Addr s, args, List.length args, reg, dest));
       entry
-    | _ -> dest
+    | _, None -> dest
   and tr_binop (op : binop) e1 e2 reg dest =
     match reg with
     | None -> tr_expression e1 None (tr_expression e2 None dest)
@@ -115,7 +116,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
         | Some reg -> tr_expression e (Some reg) dest
         | None ->
           let reg = new_reg () in
-          let id_store = push_node (IStore ((AddrGlobl id), reg, dest)) in
+          let id_store = push_node (IStore ((AddrGlobl id), reg, Word, dest)) in
           tr_expression e (Some reg) id_store)
     | If (c, e1, e2) ->
       let node_T = tr_sequence e1 dest in
@@ -137,7 +138,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let rd = new_reg () in
       tr_expression e (Some re) (
       tr_expression d (Some rd) (
-      push_node (IStore (AddrReg rd, re, dest))))
+      push_node (IStore (AddrReg rd, re, Word, dest))))
 
   and tr_sequence seq entry =
     List.fold_right (fun inst entry ->

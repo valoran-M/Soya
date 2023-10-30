@@ -23,11 +23,13 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let rec type_size (t : typ) =
     match t with
+    | TChar -> 4
     | TInt | TBool -> 4
     | TVoid     -> 0
     | TArray t  -> type_size t
     | TClass _  -> 4
     | TParent _ -> 4
+    | TNothing  -> assert false
   in
 
   let field_size (c : typ class_def) =
@@ -68,6 +70,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let rec tr_expression e : Imp.expression * (string * Soya.typ) list =
     match e.expr with
+    | Char c              -> Char c, []
     | Cst c               -> Cst c,  []
     | Bool b              -> Bool b, []
     | Var v               -> Var v,  []

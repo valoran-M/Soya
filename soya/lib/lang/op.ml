@@ -4,6 +4,9 @@ type s_imm = Label of ident | Cst of int
 
 type static = ident * s_imm list
 
+type mem_size =
+  | Word | Byte
+
 type 'reg address =
   | Addr        of ident
   | AddrReg     of 'reg
@@ -11,6 +14,7 @@ type 'reg address =
   | AddrGlobl   of ident
 
 type operation =
+  | OChar  of int
   | OConst of int
   | OLabel of ident
   | OAddImm of int

@@ -19,6 +19,7 @@ let print_cond print_reg ppf args =
 
 let print_op print_reg ppf args =
   match args with
+  | OChar  n, []       -> fprintf ppf "%d" n
   | OConst n, []       -> fprintf ppf "%d" n
   | OLabel l, []       -> fprintf ppf "%s" l
   | OAddImm i,[r]      -> fprintf ppf "%d + %a" i print_reg r

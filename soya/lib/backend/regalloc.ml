@@ -79,17 +79,17 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] args;
         init id n
-      | ILoad (AddrReg r, rd, n) ->
+      | ILoad (AddrReg r, rd, _, n) ->
         incr_reg r; incr_reg rd;
         add_succ id n;
         add_def_use id [rd] [r];
         init id n
-      | ILoad (_, rd, n) ->
+      | ILoad (_, rd, _, n) ->
         incr_reg rd;
         add_succ id n;
         add_def_use id [rd] [];
         init id n
-      | IStore (a, r, n) ->
+      | IStore (a, r, _, n) ->
         incr_reg r;
         add_succ id n;
         add_def_use id [] (r :: addr_use a);

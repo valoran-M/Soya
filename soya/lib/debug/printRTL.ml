@@ -44,11 +44,11 @@ let print_function ppf f print_reg =
         fprintf ppf "%a = %a\n" print_reg rd
           (PrintOp.print_op print_reg) (op, args);
         print_instruction ppf n;
-      | ILoad (addr, rd, n) -> 
+      | ILoad (addr, rd, _, n) -> 
         fprintf ppf "%a -> %a\n"
           (fun ppf -> PrintOp.print_addr ppf print_reg) addr print_reg rd;
         print_instruction ppf n
-      | IStore (addr, rd, n) ->
+      | IStore (addr, rd, _, n) ->
         fprintf ppf "%a -> %a\n" print_reg rd
           (fun ppf -> PrintOp.print_addr ppf print_reg) addr;
         print_instruction ppf n;

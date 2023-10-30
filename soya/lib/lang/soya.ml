@@ -3,11 +3,13 @@ type location =
   ; lc  : Lexing.position}
 
 type typ =
-  | TInt 
+  | TInt
+  | TChar
   | TBool
   | TClass  of string
   | TParent of typ
   | TArray  of typ
+  | TNothing
   | TVoid (* not an actual type in the source language, but having it in
              the AST makes the code more uniform *)
 
@@ -18,6 +20,7 @@ type 'a expression = {
   expr: 'a expr;
 }
 and 'a expr =
+  | Char  of int
   | Cst   of int
   | Bool  of bool
   | Var   of string

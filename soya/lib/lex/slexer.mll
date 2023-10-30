@@ -22,6 +22,7 @@
         "extends",  EXTENDS;
         "new",      NEW;
         "return",   RETURN;
+        "char",     TYP_CHAR;
         "int",      TYP_INT;
         "bool",     TYP_BOOL;
         "void",     TYP_VOID;

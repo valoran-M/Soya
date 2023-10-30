@@ -36,8 +36,8 @@ let tr_function (fdef : Ltl.function_def) =
     | IPutchar (r, n)     -> LPutchar r :: lin n code
     | IAlloc (r, n)       -> LAlloc r :: lin n code
     | IMove (r1, r2, n)   -> LMove (r1, r2) :: lin n code
-    | ILoad (a, r, n)     -> LLoad (a, r) :: lin n code
-    | IStore (a, r, n)    -> LStore (a, r) :: lin n code
+    | ILoad (a, r, s, n)  -> LLoad (a, s, r) :: lin n code
+    | IStore (a, r, s, n) -> LStore (a, s, r) :: lin n code
     | ICall (i, _, n)     -> LCall i :: lin n code
     | IReturn _           -> (LReturn :: code)
     | IGoto n             -> lin n code

@@ -1,6 +1,7 @@
 type binop = Add | Mul | Lt
 
 type expression =
+  | Char  of int 
   | Cst   of int
   | Bool  of bool
   | Var   of string

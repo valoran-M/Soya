@@ -15,8 +15,8 @@ type 'reg instruction =
   | IAlloc    of 'reg * 'reg option * node
   | IMove     of 'reg * 'reg * node
   | IOp       of operation * 'reg list * 'reg * node
-  | ILoad     of 'reg address * 'reg * node
-  | IStore    of 'reg address * 'reg * node
+  | ILoad     of 'reg address * 'reg * mem_size * node
+  | IStore    of 'reg address * 'reg * mem_size * node
   | ISetParam of 'reg * int * int * node
   | IGetParam of 'reg * int * int * node
   | ICall     of 'reg Op.address * 'reg list * int * 'reg option * node
