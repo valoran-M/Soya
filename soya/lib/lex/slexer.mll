@@ -7,6 +7,7 @@
     let h = Hashtbl.create 17 in
     List.iter (fun (s, k) -> Hashtbl.add h s k)
       [ "putchar",  PUTCHAR;
+        "abstract", ABSTRACT;
         "if",       IF;
         "else",     ELSE;
         "while",    WHILE;

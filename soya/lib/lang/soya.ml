@@ -63,6 +63,8 @@ type 'a class_def = {
   fields: (string * typ) list;
   methods: 'a function_def list;
   parent: string option;
+  abstract : bool;
+  abs_methods : 'a function_def list;
 }
 
 (* Program as in IMP + types + user-defined  *)

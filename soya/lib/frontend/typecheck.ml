@@ -6,6 +6,12 @@ module Env = Map.Make(String)
 let type_check (prog : location program) =
   let envc = Hashtbl.create 16 in
 
+  let get_class n =
+    match Hashtbl.find_opt envc n with
+    | None -> failwith "Class doesn't exist"
+    | Some c -> c
+  in
+
   let get_function f =
     try
       List.find (fun (e : location function_def) -> e.name = f) prog.functions
@@ -78,10 +84,12 @@ let type_check (prog : location program) =
     | _     -> check_type loc TInt exp; mk_expr exp (Cst c)
 
   and type_args args (f : location function_def) env =
-    List.fold_left2 (fun n arg (_, t) ->
-        let e = type_expr t arg env in
-        e :: n
-      ) [] args f.params
+    try
+      List.fold_left2 (fun n arg (_, t) ->
+          let e = type_expr t arg env in
+          e :: n
+        ) [] args f.params
+    with _ -> failwith "arguments list has not the same size"
 
   and type_function f args env =
     let f = get_function f in
@@ -95,10 +103,12 @@ let type_check (prog : location program) =
     let args = type_args args m env in
     mk_expr m.return (MCall (c, f, args))
 
-  and type_constructor c args env =
-    let m = get_method envc c "constructor" in
+  and type_constructor cn args env =
+    let c = get_class cn in
+    if c.abstract then failwith "Class is abstract";
+    let m = get_method envc cn "constructor" in
     let args = type_args args m env in
-    mk_expr (TClass c) (New (c, args))
+    mk_expr (TClass cn) (New (cn, args))
 
   and type_read m env =
     match m with
@@ -168,13 +178,18 @@ let type_check (prog : location program) =
 
   let type_class (c : location class_def) =
     let env = Env.add "this" (TClass c.name) env in
-    let env = match c.parent with
-              | Some c -> Env.add "super" (TParent (TClass c)) env 
-              | None   -> env in
+    let env =
+      match c.parent with
+      | None   -> env
+      | Some cn ->
+        let c = get_class cn in
+        if c.abstract then ();
+        Env.add "super" (TParent (TClass cn)) env 
+    in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in
     let fields = merge_fields envc c.name [] in
-    { c with fields; methods }
+    { c with fields; methods; abs_methods = [] }
   in
 
   (* Prog ------------------------------------------------------------------- *)

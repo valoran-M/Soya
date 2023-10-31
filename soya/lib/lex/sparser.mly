@@ -23,7 +23,7 @@
 %token <bool> BOOL
 %token <string> IDENT
 %token TYP_INT TYP_BOOL TYP_VOID TYP_CHAR
-%token VAR FUNCTION
+%token VAR FUNCTION ABSTRACT
 %token ATTRIBUTE METHOD EXTENDS CLASS THIS SUPER
 %token DOT NEW LBRACKET RBRACKET
 %token LPAR RPAR BEGIN END COMMA SEMI
@@ -62,9 +62,12 @@ decl:
 
 
 class_def:
-| CLASS name=IDENT parent=option(EXTENDS p=IDENT { p }) 
+| ABSTRACT CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
    BEGIN fields=list(attribute_decl) methods=list(method_def) END 
-   { { name; fields; methods; parent; } }
+  { { name; fields; methods; parent; abstract = true; abs_methods = [] } }
+| CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
+   BEGIN fields=list(attribute_decl) methods=list(method_def) END 
+  { { name; fields; methods; parent; abstract = false; abs_methods = [] } }
 ;
 
 variable_decl:

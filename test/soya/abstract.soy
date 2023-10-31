@@ -1,0 +1,24 @@
+abstract class apoint {
+  attribute int x;
+  attribute int y;
+
+  /* abstract method int sum(int x); */
+}
+
+class point extends apoint {
+  method void constructor(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  method int sum(int x) {
+    return (x+this.x+this.y);
+  }
+}
+
+function void main() {
+  point p = new point(1, 1);
+  int c = p.sum(48);
+  putchar(c);
+}
+
