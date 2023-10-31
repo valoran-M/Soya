@@ -62,12 +62,13 @@ decl:
 
 
 class_def:
-| ABSTRACT CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
-   BEGIN fields=list(attribute_decl) methods=list(method_def) END 
-  { { name; fields; methods; parent; abstract = true; abs_methods = [] } }
 | CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
-   BEGIN fields=list(attribute_decl) methods=list(method_def) END 
+    BEGIN fields=list(attribute_decl) methods=list(method_def) END 
   { { name; fields; methods; parent; abstract = false; abs_methods = [] } }
+| ABSTRACT CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
+    BEGIN fields=list(attribute_decl) methods=abs_methods_def END 
+  {  let methods, abs_methods = methods in
+    { name; fields; methods; parent; abstract = true; abs_methods } }
 ;
 
 variable_decl:
@@ -94,6 +95,15 @@ typ:
 function_def:
 | FUNCTION fdef=fun_def { fdef }
 ;
+
+abs_methods_def:
+| {  [], [] }
+| mdef=method_def a=abs_methods_def { let m, a = a in mdef :: m, a }
+| ABSTRACT METHOD return=typ name=IDENT
+  LPAR params=separated_list(COMMA, typed_ident) RPAR SEMI a=abs_methods_def
+    { let m, a = a in
+      m, {name; code=[]; params; return; locals=[]} :: a }
+
 
 method_def:
 | METHOD mdef=fun_def { mdef }

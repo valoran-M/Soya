@@ -176,15 +176,29 @@ let type_check (prog : location program) =
     { f with code }
   in
 
+  let check_abstract c_parent c =
+    let abs_methods = c_parent.abs_methods in
+    let abs_methods =
+      List.fold_left (fun abs (m : 'a function_def) ->
+        List.filter (fun (a : 'a function_def) -> a.name <> m.name) abs )
+      abs_methods c.methods
+    in
+    if c.abstract
+    then { c with abs_methods }
+    else
+      if abs_methods = [] then c
+      else failwith "some methods are not implemented"
+  in
+
   let type_class (c : location class_def) =
     let env = Env.add "this" (TClass c.name) env in
-    let env =
+    let env, c =
       match c.parent with
-      | None   -> env
+      | None   -> env, c
       | Some cn ->
-        let c = get_class cn in
-        if c.abstract then ();
-        Env.add "super" (TParent (TClass cn)) env 
+        let pc = get_class cn in
+        let c = if pc.abstract then check_abstract pc c else c in
+        Env.add "super" (TParent (TClass cn)) env, c
     in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in

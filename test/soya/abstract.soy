@@ -2,7 +2,7 @@ abstract class apoint {
   attribute int x;
   attribute int y;
 
-  /* abstract method int sum(int x); */
+  abstract method int sum(int x);
 }
 
 class point extends apoint {
@@ -11,9 +11,9 @@ class point extends apoint {
     this.y = y;
   }
 
-  method int sum(int x) {
+  /*method int sum(int x) {
     return (x+this.x+this.y);
-  }
+  } */
 }
 
 function void main() {
