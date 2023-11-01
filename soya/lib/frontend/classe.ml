@@ -7,7 +7,7 @@ let rec merge_fields envc c acc =
     let acc = List.append c.fields acc in
     match c.parent with
     | None -> acc
-    | Some c -> merge_fields envc c acc
+    | Some (c, _) -> merge_fields envc c acc
 
 let rec merge_methods envm (prog : typ program) (c: typ class_def) =
   match Hashtbl.find_opt envm c.name with
@@ -16,7 +16,7 @@ let rec merge_methods envm (prog : typ program) (c: typ class_def) =
     let cm = List.fold_right (fun m l -> (c.name, m) :: l) c.methods [] in
     match c.parent with
     | None -> Hashtbl.add envm c.name cm; cm
-    | Some p ->
+    | Some (p, _) ->
       let p = List.find (fun c -> c.name = p) prog.classes in
       let m = merge_methods envm prog p in
       let m = List.fold_left
@@ -42,7 +42,7 @@ let rec get_method envc c m =
     | None ->
       match c.parent with
       | None -> failwith (Printf.sprintf "method '%s' doesn't exits" m)
-      | Some c -> get_method envc c m
+      | Some (c, _) -> get_method envc c m
 
 let rec get_field envc c f =
   match Hashtbl.find_opt envc c with
@@ -53,5 +53,5 @@ let rec get_field envc c f =
     | None ->
       match c.parent with
       | None -> failwith (Printf.sprintf "fields '%s' doesn't exits" f)
-      | Some c -> get_field envc c f
+      | Some (c, _) -> get_field envc c f
 

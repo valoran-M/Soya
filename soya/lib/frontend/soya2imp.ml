@@ -205,7 +205,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       (c.name ^ "$descriptor",
         (match c.parent with
         | None   -> Op.Cst 0
-        | Some c -> Op.Label (c ^ "$descriptor")) ::
+        | Some (c, _) -> Op.Label (c ^ "$descriptor")) ::
           (List.fold_right
             (fun (n, (m : typ function_def)) s ->
               Op.Label (m.name ^ "$" ^ n) :: s)

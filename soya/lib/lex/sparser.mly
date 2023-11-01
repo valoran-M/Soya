@@ -13,6 +13,11 @@
   let mk_expr loc e =
     { annot = mk_loc loc; expr = e }
 
+  let set_parent p loc =
+    match p with
+    | Some p -> Some (p, loc)
+    | None -> None
+
 %}
 
 %token PLUS STAR
@@ -64,11 +69,19 @@ decl:
 class_def:
 | CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
     BEGIN fields=list(attribute_decl) methods=list(method_def) END 
-  { { name; fields; methods; parent; abstract = false; abs_methods = [] } }
+  { { name; fields; methods;
+      parent = set_parent parent (mk_loc $loc(parent));
+      abstract = false;
+      loc = mk_loc $sloc;
+      abs_methods = [] } }
 | ABSTRACT CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
     BEGIN fields=list(attribute_decl) methods=abs_methods_def END 
   {  let methods, abs_methods = methods in
-    { name; fields; methods; parent; abstract = true; abs_methods } }
+    { name; fields; methods;
+      parent = set_parent parent (mk_loc $loc(parent));
+      abstract = true;
+      loc = mk_loc $sloc;
+      abs_methods } }
 ;
 
 variable_decl:

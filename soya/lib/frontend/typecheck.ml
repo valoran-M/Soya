@@ -4,21 +4,21 @@ open Lang.Soya
 module Env = Map.Make(String)
 
 let type_check (prog : location program) =
-  let envc = Hashtbl.create 16 in
+  let (envc : (string, location class_def) Hashtbl.t) = Hashtbl.create 16 in
 
 (* utils functions  --------------------------------------------------------- *)
 
-  let get_class n =
+  let get_class n loc =
     match Hashtbl.find_opt envc n with
     | Some c -> c
-    | None   -> failwith "Class doesn't exist"
+    | None   -> Error_soy.Error.undeclared_class loc n
   in
 
-  let rec get_class_name t =
+  let rec get_class_name t loc =
     match t with
     | TClass s -> s
-    | TParent c -> get_class_name c
-    | _ -> failwith "Is not a class"
+    | TParent c -> get_class_name c loc
+    | _ -> Error_soy.Error.not_class loc t
   in
 
   let get_function f loc =
@@ -105,14 +105,14 @@ let type_check (prog : location program) =
     mk_expr f.return (Call (f.name, args))
 
   and type_method c f args loc env =
-    let c = type_expr TVoid c env in
-    let s = get_class_name c.annot in
-    let m = get_method envc s f in
-    let args = type_args args m loc env in
-    mk_expr m.return (MCall (c, f, args))
+    let ct    = type_expr TVoid c env in
+    let s     = get_class_name ct.annot c.annot in
+    let m     = get_method envc s f in
+    let args  = type_args args m loc env in
+    mk_expr m.return (MCall (ct, f, args))
 
   and type_constructor cn args loc env =
-    let c = get_class cn in
+    let c = get_class cn loc in
     if c.abstract then Error_soy.Error.implement_abstract loc;
     let m = get_method envc cn "constructor" in
     let args = type_args args m loc env in
@@ -122,14 +122,14 @@ let type_check (prog : location program) =
     match m with
     | Arr (a, i) ->
       let at = type_expr TVoid a env in
-      let t = get_array_type at.annot a.annot in
+      let t  = get_array_type at.annot a.annot in
       let it = type_expr TInt i env in
       mk_expr (TArray t) (Read (Arr (at, it)))
     | Atr (c, f) ->
-      let c = type_expr TVoid c env in
-      let s = get_class_name c.annot in
-      let _, t = get_field envc s f in
-      mk_expr t (Read (Atr (c, f)))
+      let ct  = type_expr TVoid c env in
+      let s   = get_class_name ct.annot c.annot in
+      let t   = get_field envc s f in
+      mk_expr (snd t) (Read (Atr (ct, f)))
   in
 
   let rec type_instruction i (ret: typ) env : typ instruction =
@@ -156,18 +156,18 @@ let type_check (prog : location program) =
       | Arr (a, i) ->
         let it = type_expr TInt i env in
         check_type i.annot it.annot TInt;
-        let at = type_expr TVoid a env in
-        let t = get_array_type at.annot a.annot in
-        let et = type_expr t e env in
+        let at  = type_expr TVoid a env in
+        let t   = get_array_type at.annot a.annot in
+        let et  = type_expr t e env in
         check_type e.annot et.annot t;
         Write (Arr(at, it), et)
       | Atr (c, f) ->
-        let c = type_expr TVoid c env in
-        let s = get_class_name c.annot in
-        let _, t = get_field envc s f in
-        let et = type_expr t e env in
+        let ct    = type_expr TVoid c env in
+        let s     = get_class_name ct.annot c.annot in
+        let _, t  = get_field envc s f in
+        let et    = type_expr t e env in
         check_type e.annot et.annot t;
-        (Write (Atr (c, f), et))
+        (Write (Atr (ct, f), et))
   and type_sequence s ret env =
     List.map (fun s -> type_instruction s ret env) s
   in
@@ -200,7 +200,7 @@ let type_check (prog : location program) =
     then { c with abs_methods }
     else
       if abs_methods = [] then c
-      else failwith "some methods are not implemented"
+      else Error_soy.Error.missing_implemen c.loc abs_methods
   in
 
   let type_class (c : location class_def) =
@@ -208,8 +208,8 @@ let type_check (prog : location program) =
     let env, c =
       match c.parent with
       | None   -> env, c
-      | Some cn ->
-        let pc = get_class cn in
+      | Some (cn, loc) ->
+        let pc = get_class cn loc in
         let c = if pc.abstract then check_abstract pc c else c in
         Env.add "super" (TParent (TClass cn)) env, c
     in

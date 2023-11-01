@@ -75,7 +75,7 @@ let print_undelcared file loc s =
 let print_error err file =
   Color.add_ansi_marking err_formatter;
   match err with
-  | Error.Type_error (e, s)               -> print_error_loc file e s
-  | Error.Undeclared_error (l, s)         -> print_undelcared file l s
-  | Error.Implement_abstract_error (l, s) -> print_error_loc file l s
+  | Error.Type_error (e, s)       -> print_error_loc file e s
+  | Error.Undeclared_error (l, s) -> print_undelcared file l s
+  | Error.Abstract_error (l, s)   -> print_error_loc file l s
 

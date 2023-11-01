@@ -58,12 +58,13 @@ type 'a function_def = {
 
 (* Class definition *)
 type 'a class_def = {
-  name:   string;
-  fields: (string * typ) list;
-  methods: 'a function_def list;
-  parent: string option;
-  abstract : bool;
-  abs_methods : 'a function_def list;
+  name:         string;
+  fields:       (string * typ) list;
+  methods:      'a function_def list;
+  parent:       (string * location) option;
+  abstract:     bool;
+  loc:          location;
+  abs_methods:  'a function_def list;
 }
 
 (* Program as in IMP + types + user-defined  *)

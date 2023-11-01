@@ -3,7 +3,7 @@ open Lang.Soya
 type error =
   | Type_error               of location * string
   | Undeclared_error         of location option * string
-  | Implement_abstract_error of location * string
+  | Abstract_error of location * string
 
 exception Error of error
 
@@ -38,6 +38,13 @@ let not_array e ty =
        \t'array'"
        (type_to_string ty))
 
+let not_class e ty =
+  raise_type_error e
+    (Printf.sprintf
+       "This expression has type '%s' but an expression was expected of type\n\
+       \t'class'"
+       (type_to_string ty))
+
 let number_arguent e nb_exp nb =
   raise_type_error e
     (Printf.sprintf
@@ -59,8 +66,21 @@ let undeclared_var l var =
     (Printf.sprintf
       "Variable '%s' does not exist" var)
 
-(* classes ------------------------------------------------------------------ *)
+let undeclared_class l c =
+  raise_undelcared_error (Some l)
+    (Printf.sprintf
+      "Class '%s' does not exist" c)
+
+(* Abstract ----------------------------------------------------------------- *)
 
 let implement_abstract l =
-  raise (Error (Implement_abstract_error (l,
+  raise (Error (Abstract_error (l,
     "You are tring to implement an abstract class")))
+
+let missing_implemen l f =
+  let f = List.fold_left
+    (fun a (f : 'a function_def) -> Printf.sprintf "%s\n\t- %s" a f.name ) "" f
+  in
+  raise (Error (Abstract_error (l,
+    Printf.sprintf "There are still functions not implemented:%s" f)))
+
