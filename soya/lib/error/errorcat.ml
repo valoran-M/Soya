@@ -55,15 +55,26 @@ let print_info file pos color =
   report file pos;
   print_prog file pos color
 
+let print_file file =
+  eprintf "@{<bold>File \"%s\"@}\n" file
+
 (* Error print -------------------------------------------------------------- *)
 
-let print_type_error file (loc : Lang.Soya.location) s =
+let print_error_loc  file (loc : Lang.Soya.location) s =
   let pose = pose_lex loc.fc loc.lc in
   print_info file pose err_color;
   eprintf "@{<bold>@{<fg_red>Error@}@}: @[%s@]@." s
 
+let print_undelcared file loc s =
+  match loc with
+  | Some loc -> print_error_loc file loc s
+  | None ->
+    print_file file;
+    eprintf "@{<bold>@{<fg_red>Error@}@}: @[%s@]@." s
+
 let print_error err file =
   Color.add_ansi_marking err_formatter;
   match err with
-  | Error.Type_error (e, s) -> print_type_error file e s
+  | Error.Type_error (e, s)       -> print_error_loc file e s
+  | Error.Undeclared_error (l, s) -> print_undelcared file l s
 

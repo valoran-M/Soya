@@ -9,7 +9,6 @@ type typ =
   | TClass  of string
   | TParent of typ
   | TArray  of typ
-  | TNothing
   | TVoid (* not an actual type in the source language, but having it in
              the AST makes the code more uniform *)
 
@@ -40,7 +39,7 @@ let mk_expr a e = { annot=a; expr=e }
 
 type 'a instruction =
   | Putchar of 'a expression
-  | Set     of string * 'a expression
+  | Set     of string * location * 'a expression
   | If      of 'a expression * 'a sequence * 'a sequence
   | While   of 'a expression * 'a sequence
   | Return  of 'a expression

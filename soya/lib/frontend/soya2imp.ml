@@ -29,7 +29,6 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | TArray t  -> type_size t
     | TClass _  -> 4
     | TParent _ -> 4
-    | TNothing  -> assert false
   in
 
   let field_size (c : typ class_def) =
@@ -147,7 +146,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | Putchar c ->
       let c, d = tr_expression c in
       instr_to_seq d (Putchar c)
-    | Set (s, e) ->
+    | Set (s, _, e) ->
       let e, d = tr_expression e in
       instr_to_seq d (Set (s, e))
     | If (c, e1, e2) ->

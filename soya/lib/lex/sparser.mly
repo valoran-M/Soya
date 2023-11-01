@@ -121,11 +121,11 @@ code:
 | VAR tid=typed_ident SEMI c=code       { tid :: fst c,      snd c }
 | i=instruction c=code                  {        fst c, i :: snd c }
 | tid=typed_ident SET e=expression SEMI c=code
-    { tid :: fst c, Set (fst tid, e) :: snd c }
+    { tid :: fst c, Set (fst tid, mk_loc $loc(tid), e) :: snd c }
 
 instruction:
 | PUTCHAR LPAR e=expression RPAR SEMI { Putchar(e) }
-| id=IDENT SET e=expression SEMI      { Set(id, e) }
+| id=IDENT SET e=expression SEMI      { Set(id, mk_loc $loc(id), e) }
 | e=expression SEMI                   { Expr(e) }
 | m=mem_access SET e=expression SEMI  { Write(m, e) }
 | RETURN e=expression SEMI            { Return(e) }
