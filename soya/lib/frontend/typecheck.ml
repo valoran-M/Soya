@@ -73,7 +73,7 @@ let type_check (prog : location program) =
       mk_expr TBool (Binop (op, e1t, e2t))
     | Call (f, args) -> type_function f args expr.annot env
     | MCall (c, f, args) -> type_method c f args env
-    | New (c, args) -> type_constructor c args env
+    | New (c, args) -> type_constructor c args expr.annot env
     | NewTab (t, s) ->
       let st = type_expr TInt s env in
       mk_expr t (NewTab (t, st))
@@ -109,9 +109,9 @@ let type_check (prog : location program) =
     let args = type_args args m env in
     mk_expr m.return (MCall (c, f, args))
 
-  and type_constructor cn args env =
+  and type_constructor cn args loc env =
     let c = get_class cn in
-    if c.abstract then failwith "Class is abstract";
+    if c.abstract then Error_soy.Error.implement_abstract loc;
     let m = get_method envc cn "constructor" in
     let args = type_args args m env in
     mk_expr (TClass cn) (New (cn, args))

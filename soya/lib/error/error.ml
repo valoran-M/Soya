@@ -1,8 +1,9 @@
 open Lang.Soya
 
 type error =
-  | Type_error of location * string
-  | Undeclared_error of location option * string
+  | Type_error               of location * string
+  | Undeclared_error         of location option * string
+  | Implement_abstract_error of location * string
 
 exception Error of error
 
@@ -52,3 +53,8 @@ let undeclared_var l var =
     (Printf.sprintf
       "Variable '%s' does not exist" var)
 
+(* classes ------------------------------------------------------------------ *)
+
+let implement_abstract l =
+  raise (Error (Implement_abstract_error (l,
+    "You are tring to implement an abstract class")))

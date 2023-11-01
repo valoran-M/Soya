@@ -1,0 +1,13 @@
+abstract class apoint {
+  attribute int x;
+  attribute int y;
+
+  abstract method int sum(int x);
+}
+
+function void main() {
+  apoint p = new apoint(1, 1);
+  int c = p.sum(48);
+  putchar(c);
+}
+
