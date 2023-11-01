@@ -65,17 +65,8 @@ let print_error_loc  file (loc : Lang.Soya.location) s =
   print_info file pose err_color;
   eprintf "@{<bold>@{<fg_red>Error@}@}: @[%s@]@." s
 
-let print_undelcared file loc s =
-  match loc with
-  | Some loc -> print_error_loc file loc s
-  | None ->
-    print_file file;
-    eprintf "@{<bold>@{<fg_red>Error@}@}: @[%s@]@." s
-
 let print_error err file =
   Color.add_ansi_marking err_formatter;
   match err with
   | Error.Type_error (e, s)       -> print_error_loc file e s
-  | Error.Undeclared_error (l, s) -> print_undelcared file l s
-  | Error.Abstract_error (l, s)   -> print_error_loc file l s
 

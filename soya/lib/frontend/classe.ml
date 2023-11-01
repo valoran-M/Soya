@@ -2,7 +2,7 @@ open Lang.Soya
 
 let rec merge_fields envc c acc =
   match Hashtbl.find_opt envc c with
-  | None -> failwith "Class doesn't exist"
+  | None -> assert false
   | Some c ->
     let acc = List.append c.fields acc in
     match c.parent with
@@ -31,27 +31,15 @@ let rec merge_methods envm (prog : typ program) (c: typ class_def) =
         ) cm m in
       Hashtbl.add envm c.name m; m
 
-let rec get_method envc c m =
-  match Hashtbl.find_opt envc c with
-  | None -> failwith (Printf.sprintf "Class '%s' doesn't exist" c)
-  | Some c ->
-    match List.find_opt (fun (e : location function_def) ->
-        e.name = m)
-          c.methods with
-    | Some m -> m
-    | None ->
-      match c.parent with
-      | None -> failwith (Printf.sprintf "method '%s' doesn't exits" m)
-      | Some (c, _) -> get_method envc c m
+let get_method envc c m mloc =
+  let c = Hashtbl.find envc c in
+  match List.find_opt (fun (e : 'a function_def) -> e.name = m) c.methods with
+  | Some m -> m
+  | None -> Error_soy.Error.undeclared_methode mloc m
 
-let rec get_field envc c f =
-  match Hashtbl.find_opt envc c with
-  | None -> failwith "Class doesn't exist"
-  | Some c ->
-    match List.find_opt (fun (e, _) -> e = f) c.fields with
-    | Some f -> f
-    | None ->
-      match c.parent with
-      | None -> failwith (Printf.sprintf "fields '%s' doesn't exits" f)
-      | Some (c, _) -> get_field envc c f
+let get_field envc c f loc =
+  let c = Hashtbl.find envc c in
+  match List.find_opt (fun (e, _) -> e = f) c.fields with
+  | Some f -> f
+  | None   -> Error_soy.Error.undeclared_field loc f
 

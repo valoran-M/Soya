@@ -124,7 +124,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let size = if case_size = 1 then Op.Byte else Op.Word in
       Binop (Add, a,
       Binop (Mul, Cst case_size, o)), size, da @ dob
-    | Atr (st, f) ->
+    | Atr (st, f, _) ->
       match st.annot with
       | TClass s ->
         let st, dst = tr_expression st in

@@ -25,7 +25,7 @@ let type_check (prog : location program) =
     match List.find_opt
       (fun (e : 'a function_def) -> e.name = f) prog.functions with
     | Some f -> f
-    | None   -> Error_soy.Error.undeclared_function (Some loc) f
+    | None   -> Error_soy.Error.undeclared_function loc f
   in
 
   let get_array_type a loc =
@@ -107,14 +107,14 @@ let type_check (prog : location program) =
   and type_method c f args loc env =
     let ct    = type_expr TVoid c env in
     let s     = get_class_name ct.annot c.annot in
-    let m     = get_method envc s f in
+    let m     = get_method envc s f loc in
     let args  = type_args args m loc env in
     mk_expr m.return (MCall (ct, f, args))
 
   and type_constructor cn args loc env =
     let c = get_class cn loc in
     if c.abstract then Error_soy.Error.implement_abstract loc;
-    let m = get_method envc cn "constructor" in
+    let m = get_method envc cn "constructor" loc in
     let args = type_args args m loc env in
     mk_expr (TClass cn) (New (cn, args))
 
@@ -125,11 +125,11 @@ let type_check (prog : location program) =
       let t  = get_array_type at.annot a.annot in
       let it = type_expr TInt i env in
       mk_expr (TArray t) (Read (Arr (at, it)))
-    | Atr (c, f) ->
+    | Atr (c, f, floc) ->
       let ct  = type_expr TVoid c env in
       let s   = get_class_name ct.annot c.annot in
-      let t   = get_field envc s f in
-      mk_expr (snd t) (Read (Atr (ct, f)))
+      let t   = get_field envc s f floc in
+      mk_expr (snd t) (Read (Atr (ct, f, floc)))
   in
 
   let rec type_instruction i (ret: typ) env : typ instruction =
@@ -161,13 +161,13 @@ let type_check (prog : location program) =
         let et  = type_expr t e env in
         check_type e.annot et.annot t;
         Write (Arr(at, it), et)
-      | Atr (c, f) ->
+      | Atr (c, f, floc) ->
         let ct    = type_expr TVoid c env in
         let s     = get_class_name ct.annot c.annot in
-        let _, t  = get_field envc s f in
+        let _, t  = get_field envc s f floc  in
         let et    = type_expr t e env in
         check_type e.annot et.annot t;
-        (Write (Atr (ct, f), et))
+        (Write (Atr (ct, f, floc), et))
   and type_sequence s ret env =
     List.map (fun s -> type_instruction s ret env) s
   in

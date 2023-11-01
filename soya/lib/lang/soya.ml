@@ -32,8 +32,8 @@ and 'a expr =
   | This (* current object *)
   | Super
 and 'a mem =
-  | Arr of 'a expression * 'a expression (* array access     e1[e2]  *)
-  | Atr of 'a expression * string        (* attribute access  o.x    *)
+  | Arr of 'a expression * 'a expression     (* array access     e1[e2]  *)
+  | Atr of 'a expression * string * location (* attribute access  o.x    *)
 
 let mk_expr a e = { annot=a; expr=e }
 

@@ -151,7 +151,7 @@ instruction:
 
 mem_access:
 | e1=expression LBRACKET e2=expression RBRACKET { Arr(e1, e2) }
-| e=expression DOT id=IDENT                     { Atr(e, id) }
+| e=expression DOT id=IDENT                     { Atr(e, id, mk_loc $loc(id)) }
 ;
 
 expression:
