@@ -38,6 +38,12 @@ let not_array e ty =
        \t'array'"
        (type_to_string ty))
 
+let number_arguent e nb_exp nb =
+  raise_type_error e
+    (Printf.sprintf
+      "The function call contains the wrong number of elements,\n\
+        \t%d instead of %d " nb nb_exp)
+
 (* undeclared *)
 
 let raise_undelcared_error l s =

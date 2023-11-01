@@ -72,7 +72,7 @@ let type_check (prog : location program) =
       check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
       mk_expr TBool (Binop (op, e1t, e2t))
     | Call (f, args) -> type_function f args expr.annot env
-    | MCall (c, f, args) -> type_method c f args env
+    | MCall (c, f, args) -> type_method c f args expr.annot env
     | New (c, args) -> type_constructor c args expr.annot env
     | NewTab (t, s) ->
       let st = type_expr TInt s env in
@@ -89,31 +89,33 @@ let type_check (prog : location program) =
     | TChar -> mk_expr exp (Char c)
     | _     -> check_type loc TInt exp; mk_expr exp (Cst c)
 
-  and type_args args (f : location function_def) env =
+  and type_args args (f : location function_def) loc env =
     try
       List.fold_left2 (fun n arg (_, t) ->
           let e = type_expr t arg env in
           e :: n
         ) [] args f.params
-    with _ -> failwith "arguments list has not the same size"
+    with Invalid_argument _ ->
+      Error_soy.Error.number_arguent loc
+        (List.length f.params) (List.length args)
 
   and type_function f args loc env =
     let f = get_function f loc in
-    let args = type_args args f env in
+    let args = type_args args f loc env in
     mk_expr f.return (Call (f.name, args))
 
-  and type_method c f args env =
+  and type_method c f args loc env =
     let c = type_expr TVoid c env in
     let s = get_class_name c.annot in
     let m = get_method envc s f in
-    let args = type_args args m env in
+    let args = type_args args m loc env in
     mk_expr m.return (MCall (c, f, args))
 
   and type_constructor cn args loc env =
     let c = get_class cn in
     if c.abstract then Error_soy.Error.implement_abstract loc;
     let m = get_method envc cn "constructor" in
-    let args = type_args args m env in
+    let args = type_args args m loc env in
     mk_expr (TClass cn) (New (cn, args))
 
   and type_read m env =
