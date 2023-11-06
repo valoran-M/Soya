@@ -113,7 +113,10 @@ let gen_prog (prog : Lang.Linear.program) : program =
     @@ li v0 10
     @@ syscall
   and built_ins =
-    comment "built-in atoi"
+    S "\n"
+    @@ comment
+      " built-in functions \
+        -----------------------------------------------------------\n"
     @@ label "atoi"
     @@ li   v0 0
     @@ label "atoi_loop"
@@ -131,12 +134,19 @@ let gen_prog (prog : Lang.Linear.program) : program =
     @@ syscall
     @@ label "atoi_end"
     @@ jr   ra
+  
+    @@ S "\n"
+    @@ label "instanceof"
+    @@ li v0 0
+    @@ jr ra
+
+    @@ S "\n\n"
   in
 
 
   let function_codes = List.fold_right
     (fun (fdef : Linear.function_def) code ->
-      label fdef.name @@ tr_function fdef @@ code)
+      S "\n" @@ label fdef.name @@ tr_function fdef @@ code)
     prog.functions nop
   in
   let text = init @@ function_codes @@ built_ins
