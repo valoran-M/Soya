@@ -1,0 +1,37 @@
+class point {
+  attribute int x;
+  attribute int y;
+
+  method void constructor(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+  method int sum(int x) {
+    return (x+this.x+this.y);
+  }
+}
+
+class point3 extends point {
+  attribute int z;
+
+  method void constructor(int x, int y, int z) {
+    super(x, y);
+    this.z = z;
+  }
+
+  method int sum(int x) {
+    return super.sum(x) + this.z;
+  }
+}
+
+function void main() {
+  point p = new point(1, 2);
+  if (p instanceof point3) {
+    putchar('0');
+  } else {
+    putchar('1');
+  }
+}
+
+// prints '3'
+

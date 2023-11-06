@@ -82,6 +82,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | Super               -> Var "this", []
     | MCall (o, s, args)  -> tr_mcall o s args
     | Read m              -> let m, s, d = tr_mem m in Deref (m, s), d
+    | Instanceof(e,(c,_)) ->
+      let e, d = tr_expression e in
+      Call ("instanceof",
+        [Deref (e, Word); Deref (Addr (c ^ "$descriptor"), Word)]), d
     | New (c, args)       ->
       let a, d = tr_args args in
       let v = new_var c in

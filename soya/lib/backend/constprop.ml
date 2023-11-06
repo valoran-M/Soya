@@ -19,6 +19,7 @@ let init_const (f : pseudo function_def) =
     | ILoad (_, r, _, _)
     | IGetParam (r, _, _, _) -> r :: a
     | IMove (rd, r, _) -> rd :: r :: a
+    | ICall (_, _, _, Some r, _) -> r :: a
     | _ -> a
   in
   let regs = Hashtbl.fold (fun _ i l -> inst_regs i l) f.code [] in

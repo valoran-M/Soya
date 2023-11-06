@@ -55,7 +55,7 @@ let type_check (prog : location program) =
 
 (* AST typer ---------------------------------------------------------------- *)
 
-  let rec type_expr exp (expr : location expression) env : typ expression=
+  let rec type_expr exp (expr : location expression) env : typ expression =
     match expr.expr with
     | Char c          -> check_type expr.annot TChar exp; mk_expr exp (Char c)
     | Cst c           -> type_const exp expr.annot c
@@ -71,6 +71,11 @@ let type_check (prog : location program) =
       let e2t = type_expr TInt e2 env in
       check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
       mk_expr TBool (Binop (op, e1t, e2t))
+    | Instanceof (e, (c, a)) ->
+      let cn = (get_class c a).name in
+      let et = type_expr TVoid e env in
+      let _  = get_class_name et.annot e.annot in
+      mk_expr TBool (Instanceof (et, (c, TClass cn)))
     | Call (f, args) -> type_function f args expr.annot env
     | MCall (c, f, args) -> type_method c f args expr.annot env
     | New (c, args) -> type_constructor c args expr.annot env

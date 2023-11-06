@@ -58,7 +58,11 @@ let print_function ppf f print_reg =
       | ISetParam (r, i, _, n) ->
         fprintf ppf "%a -> set_param %d\n" print_reg r i;
         print_instruction ppf n;
-      | ICall (fun_id, args, _, _, n) ->
+      | ICall (fun_id, args, _, r, n) ->
+        (match r with
+        | None -> ()
+        | Some r -> fprintf ppf "%a <- " print_reg r
+        );
         fprintf ppf "\"%a\"(%a)\n"
           (fun ppf -> PrintOp.print_addr ppf print_reg) fun_id print_arg args;
         print_instruction ppf n;

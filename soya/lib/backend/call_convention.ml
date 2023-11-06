@@ -110,29 +110,30 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
     | None ->
       let nid = new_node () in
       Hashtbl.add id_env i nid;
-      let bid = match Hashtbl.find fdef.code i with
-      | INop n           -> push_node (INop (tr_instruction n))
-      | IGoto n          -> push_node (IGoto (tr_instruction n))
-      | IPutchar(r,n)    -> tr_putchar r (tr_instruction n)
-      | IAlloc(r,Some d,n)-> tr_alloc r d (tr_instruction n)
-      | IMove(rd,r,n)    -> push_node (IMove (reg rd, reg r, tr_instruction n))
-      | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
-      | ILoad(a,r,s,n)   -> push_node (ILoad (tr_addresse a, reg r, s, tr_instruction n))
-      | IStore(a,r,s,n)  -> push_node (IStore(tr_addresse a, reg r, s, tr_instruction n))
-      | ICall(id,lr,_,r,n)-> tr_call (tr_addresse id) lr (tr_instruction n) r
-      | ICond(c,lr,nt,nf) ->
-        push_node
-          (ICond(c, List.map reg lr, tr_instruction nt, tr_instruction nf))
-      | IReturn None     ->
-        let dest = push_node (IReturn None) in
-        let id = pop_callee_save dest in
-        Hashtbl.replace id_env i id; id
-      | IReturn (Some r) ->
-        let dest = push_node (IMove (Real v0, reg r, push_node
-                             (IReturn None))) in
-        let id = pop_callee_save dest in
-        Hashtbl.replace id_env i id; id
-      | ISetParam _ | IGetParam _ | IAlloc (_, None,_) -> assert false
+      let bid =
+        match Hashtbl.find fdef.code i with
+        | INop n           -> push_node (INop (tr_instruction n))
+        | IGoto n          -> push_node (IGoto (tr_instruction n))
+        | IPutchar(r,n)    -> tr_putchar r (tr_instruction n)
+        | IAlloc(r,Some d,n)-> tr_alloc r d (tr_instruction n)
+        | IMove(rd,r,n)    -> push_node (IMove (reg rd, reg r, tr_instruction n))
+        | IOp(op,rl,r,n)   -> push_node (IOp(op,List.map reg rl,reg r,tr_instruction n))
+        | ILoad(a,r,s,n)   -> push_node (ILoad (tr_addresse a, reg r, s, tr_instruction n))
+        | IStore(a,r,s,n)  -> push_node (IStore(tr_addresse a, reg r, s, tr_instruction n))
+        | ICall(id,lr,_,r,n)-> tr_call (tr_addresse id) lr (tr_instruction n) r
+        | ICond(c,lr,nt,nf) ->
+          push_node
+            (ICond(c, List.map reg lr, tr_instruction nt, tr_instruction nf))
+        | IReturn None     ->
+          let dest = push_node (IReturn None) in
+          let id = pop_callee_save dest in
+          Hashtbl.replace id_env i nid; id
+        | IReturn (Some r) ->
+          let dest = push_node (IMove (Real v0, reg r, push_node
+                               (IReturn None))) in
+          let id = pop_callee_save dest in
+          Hashtbl.replace id_env i id; id
+        | ISetParam _ | IGetParam _ | IAlloc (_, None,_) -> assert false
       in
       let node = Hashtbl.find code bid in
       Hashtbl.remove code bid;

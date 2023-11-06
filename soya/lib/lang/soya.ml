@@ -26,10 +26,11 @@ and 'a expr =
   | Binop of binop * 'a expression * 'a expression
   | Call  of string * 'a expression list
   | MCall of 'a expression * string * 'a expression list
-  | New   of string * 'a expression list (* create an instance and call the constructor *)
-  | NewTab of typ * 'a expression (* create an array of the given type and size *)
-  | Read  of 'a mem               (* read in memory *)
-  | This (* current object *)
+  | New   of string * 'a expression list
+  | Read  of 'a mem
+  | NewTab     of typ * 'a expression
+  | Instanceof of 'a expression * (string * 'a)
+  | This
   | Super
 and 'a mem =
   | Arr of 'a expression * 'a expression     (* array access     e1[e2]  *)

@@ -32,10 +32,11 @@
 %token ATTRIBUTE METHOD EXTENDS CLASS THIS SUPER
 %token DOT NEW LBRACKET RBRACKET
 %token LPAR RPAR BEGIN END COMMA SEMI
-%token PUTCHAR SET IF ELSE WHILE RETURN
+%token PUTCHAR SET IF ELSE WHILE RETURN INSTANCEOF
 %token EOF
 
 %left LT
+%left INSTANCEOF
 %left PLUS
 %left STAR
 %nonassoc LBRACKET DOT
@@ -164,6 +165,8 @@ expression:
 | SUPER                                 { mk_expr $sloc (Super) }
 | m=mem_access                          { mk_expr $sloc (Read m) }
 | e1=expression op=binop e2=expression  { mk_expr $sloc (Binop(op, e1, e2)) }
+| e=expression INSTANCEOF id=IDENT
+  { mk_expr $sloc (Instanceof (e, (id, mk_loc $loc(id)))) }
 | f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
   { mk_expr $sloc (Call(f, params)) }
 | e=expression DOT f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
