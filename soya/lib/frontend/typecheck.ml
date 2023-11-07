@@ -14,10 +14,9 @@ let type_check (prog : location program) =
     | None   -> Error_soy.Error.undeclared_class loc n
   in
 
-  let rec get_class_name t loc =
+  let get_class_name t loc =
     match t with
     | TClass s -> s
-    | TParent c -> get_class_name c loc
     | _ -> Error_soy.Error.not_class loc t
   in
 
@@ -42,10 +41,26 @@ let type_check (prog : location program) =
 
 
 (* type checker ------------------------------------------------------------- *)
+  let instanceof c cexp loc =
+    let cexp = get_class cexp loc in
+    let rec aux c =
+      let c = get_class c loc in
+      if c.name = cexp.name then true
+      else
+        match c.parent with
+        | None -> false
+        | Some (p, _) -> aux p
+    in
+    aux c
+  in
 
   let check_type l t exp =
     match t, exp with
     | TInt, TChar | TChar, TInt -> ()
+    | TClass c, TClass cexp -> 
+      if instanceof c cexp l
+      then ()
+      else Error_soy.Error.type_error l t exp
     | _, TVoid -> ()
     | _ ->
       if t = exp
@@ -81,7 +96,7 @@ let type_check (prog : location program) =
     | New (c, args) -> type_constructor c args expr.annot env
     | NewTab (t, s) ->
       let st = type_expr TInt s env in
-      mk_expr t (NewTab (t, st))
+      mk_expr (TArray t) (NewTab (t, st))
     | Read m  -> type_read m env
     | This    -> mk_expr (type_var "this" expr.annot env).annot This
     | Super   -> mk_expr (type_var "super" expr.annot env).annot Super
@@ -145,6 +160,7 @@ let type_check (prog : location program) =
     | Set (s, sloc, e) ->
       let t  = get_var_type s sloc env in
       let et = type_expr t e env in
+      check_type e.annot et.annot t;
       Set (s, sloc, et)
     | If (c, e1, e2) ->
       let ct = type_expr TBool c env in
@@ -216,7 +232,7 @@ let type_check (prog : location program) =
       | Some (cn, loc) ->
         let pc = get_class cn loc in
         let c = if pc.abstract then check_abstract pc c else c in
-        Env.add "super" (TParent (TClass cn)) env, c
+        Env.add "super" (TClass pc.name) env, c
     in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in

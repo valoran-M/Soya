@@ -7,7 +7,6 @@ type typ =
   | TChar
   | TBool
   | TClass  of string
-  | TParent of typ
   | TArray  of typ
   | TVoid (* not an actual type in the source language, but having it in
              the AST makes the code more uniform *)

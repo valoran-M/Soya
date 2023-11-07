@@ -14,21 +14,19 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       env := n :: !env; n
   in
 
-  let rec type_to_class t =
+  let type_to_class t =
     match t with
     | TClass c -> get_class c
-    | TParent c -> type_to_class c
     | _ -> assert false
   in
 
-  let rec type_size (t : typ) =
+  let type_size (t : typ) =
     match t with
     | TChar -> 1
     | TInt | TBool -> 4
     | TVoid     -> 0
-    | TArray t  -> type_size t
+    | TArray _  -> 4
     | TClass _  -> 4
-    | TParent _ -> 4
   in
 
   let field_size (c : typ class_def) =
@@ -109,16 +107,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | _ ->
       let c, dc = tr_expression o in
       let a, da = tr_args args in
-      let f = Imp.Binop (Add, deref_method_call o.annot c,
+      let f = Imp.Binop (Add, Deref(c, Word),
                               Cst (get_method_offset o.annot s)) in
       Imp.DCall (Deref (f, Word), c :: a), dc @ da
   
-  and deref_method_call t c =
-    match t with
-    | TClass _  -> Imp.Deref (c, Word)
-    | TParent p -> Imp.Deref (deref_method_call p c, Word)
-    | _ -> assert false
-
   and tr_mem (m : typ mem) =
     match m with
     | Arr (a, o) ->
