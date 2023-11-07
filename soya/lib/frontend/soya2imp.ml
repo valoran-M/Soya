@@ -85,7 +85,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | Instanceof(e,(c,_)) ->
       let e, d = tr_expression e in
       Call ("instanceof",
-        [Deref (e, Word); Addr (c ^ "$descriptor")]), d
+        [e; Addr (c ^ "$descriptor")]), d
     | New (c, args)       ->
       let a, d = tr_args args in
       let v = new_var c in
