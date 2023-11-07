@@ -93,7 +93,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       tr_expression e1 (Some r1) n2
   in
 
-  let tr_condition (cond : Lang.Imp.expression) destT destF =
+  let rec tr_condition (cond : Lang.Imp.expression) destT destF =
     match cond with
     | Binop (Lt, e1, e2) ->
       let r1 = new_reg () in
@@ -101,6 +101,12 @@ let tr_function (fdef : Lang.Imp.function_def) =
       let id_cond = push_node (ICond(CLt, [r1; r2], destT, destF)) in
       let id2 = tr_expression e2 (Some r2) id_cond in
       tr_expression e1 (Some r1) id2
+    | Binop (And, c1, c2) ->
+      let cond_c2 = tr_condition c2 destT destF in
+      tr_condition c1 cond_c2 destF
+    | Binop (Or, c1, c2) ->
+      let cond_c2 = tr_condition c2 destT destF in
+      tr_condition c1 destT cond_c2 
     | _ ->
       let r = new_reg () in
       let id_node = push_node (ICond (CEqi 1, [r], destT, destF)) in
