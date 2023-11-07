@@ -20,7 +20,7 @@
 
 %}
 
-%token PLUS STAR
+%token SUB PLUS STAR
 %token LT
 
 %token <char> CHAR
@@ -38,6 +38,7 @@
 %left LT
 %left INSTANCEOF
 %left PLUS
+%left SUB 
 %left STAR
 %nonassoc LBRACKET DOT
 
@@ -181,6 +182,7 @@ expression:
 
 %inline binop:
 | PLUS  { Lang.Imp.Add }
+| SUB   { Lang.Imp.Sub }
 | STAR  { Lang.Imp.Mul }
 | LT    { Lang.Imp.Lt }
 ;

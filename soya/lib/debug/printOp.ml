@@ -23,8 +23,10 @@ let print_op print_reg ppf args =
   | OConst n, []       -> fprintf ppf "%d" n
   | OLabel l, []       -> fprintf ppf "%s" l
   | OAddImm i,[r]      -> fprintf ppf "%d + %a" i print_reg r
+  | OSubImm i,[r]      -> fprintf ppf "%d - %a" i print_reg r
   | OMulImm i,[r]      -> fprintf ppf "%d * %a" i print_reg r
   | OAdd,     [r1; r2] -> fprintf ppf "%a + %a" print_reg r1 print_reg r2
+  | OSub,     [r1; r2] -> fprintf ppf "%a - %a" print_reg r1 print_reg r2
   | OMul,     [r1; r2] -> fprintf ppf "%a * %a" print_reg r1 print_reg r2
   | OLt,      [r1; r2] -> fprintf ppf "%a < %a" print_reg r1 print_reg r2
   | _, _ -> assert false

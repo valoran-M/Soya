@@ -17,8 +17,10 @@ let tr_function (fdef : Linear.function_def) =
     | OConst n,  []       -> li r n
     | OLabel l,  []       -> la r l
     | OAddImm n, [r1]     -> if r = r1 && n = 0 then nop else addi r r1 n
+    | OSubImm n, [r1]     -> if r = r1 && n = 0 then nop else subi r r1 n
     | OMulImm n, [r1]     -> if r = r1 && n = 1 then nop else muli r r1 n
     | OAdd,      [r1; r2] -> add r r1 r2
+    | OSub,      [r1; r2] -> sub r r1 r2
     | OMul,      [r1; r2] -> mul r r1 r2
     | OLt,       [r1; r2] -> slt r r1 r2
     | _ -> assert false

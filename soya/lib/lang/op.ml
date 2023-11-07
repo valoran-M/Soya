@@ -18,8 +18,10 @@ type operation =
   | OConst of int
   | OLabel of ident
   | OAddImm of int
+  | OSubImm of int
   | OMulImm of int
-  | OAdd  | OMul
+  | OAdd | OSub
+  | OMul
   | OLt
 
 type condition =

@@ -50,8 +50,10 @@ let init_const (f : pseudo function_def) =
     | OConst i,  []   -> Some (rd, (Const i))
     | OLabel _,  []   -> Some (rd, NConst)
     | OAddImm i, [r]  -> one_reg i r rd ( + ) c_in
+    | OSubImm i, [r]  -> one_reg i r rd ( - ) c_in
     | OMulImm i, [r]  -> one_reg i r rd ( * ) c_in
-    | OAdd, [r1; r2]  -> two_reg r1 r2 rd ( + ) c_in
+    | OAdd, [r1; r2]  -> two_reg r1 r2 rd ( - ) c_in
+    | OSub, [r1; r2]  -> two_reg r1 r2 rd ( + ) c_in
     | OMul, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
     | OLt,  [r1; r2]  ->
       two_reg r1 r2 rd (fun i1 i2 -> if i1 <= i2 then 1 else 0) c_in
@@ -203,9 +205,12 @@ let tr_program (prog : pseudo program) =
       | OConst _, []
       | OLabel _, []   -> push_node (IOp (op, args, rd, dest))
       | OAddImm i, [r] -> one_reg r i ( + )
+      | OSubImm i, [r] -> one_reg r i ( - )
       | OMulImm i, [r] -> one_reg r i ( * )
       | OAdd, [r1; r2]  ->
         two_reg r1 r2 ( + ) (fun c r -> IOp (OAddImm c, [r], rd, dest))
+      | OSub, [r1; r2]  ->
+        two_reg r1 r2 ( - ) (fun c r -> IOp (OSubImm c, [r], rd, dest))
       | OMul, [r1; r2]  ->
         two_reg r1 r2 ( * ) (fun c r -> IOp (OMulImm c, [r], rd, dest))
       | OLt,  [r1; r2]  ->

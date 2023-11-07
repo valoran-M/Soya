@@ -1,4 +1,6 @@
-type binop = Add | Mul | Lt
+type binop =
+  | Add | Sub | Mul
+  | Lt
 
 type expression =
   | Char  of int 

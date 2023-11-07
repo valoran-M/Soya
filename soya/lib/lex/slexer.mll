@@ -51,6 +51,7 @@ rule token = parse
   | ";"   { SEMI }
   | "="   { SET }
   | "+"   { PLUS }
+  | "-"   { SUB  }
   | "*"   { STAR }
   | "<"   { LT }
   | "("   { LPAR }

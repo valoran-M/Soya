@@ -81,6 +81,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Some reg ->
       let op =
         match op with
+        | Sub -> Lang.Op.OSub
         | Add -> Lang.Op.OAdd | Mul -> Lang.Op.OMul
         | Lt  -> Lang.Op.OLt
       in
