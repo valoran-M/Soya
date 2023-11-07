@@ -179,8 +179,19 @@ let tr_program (prog : typ program) : Lang.Imp.program =
         params = "this" :: List.map fst f.params;
         locals =  nv @ List.map fst f.locals;
         code; }
-      in
-    List.fold_left (fun f m -> tr_method m :: f) f c.methods
+    in
+    let tr_static (fdef : typ function_def) : Imp.function_def =
+      let code = tr_seq fdef.code in
+      let nv = !env in
+      env := [];
+      { name = fdef.name ^ "$" ^ c.name;
+        params = List.map fst fdef.params;
+        locals =  nv @ List.map fst fdef.locals;
+        code; }
+
+    in
+    List.fold_left (fun f m -> tr_method m :: f) (
+    List.fold_left (fun f s -> tr_static s :: f) f c.static) c.methods
   in
 
   let tr_function (fdef : typ function_def) : Lang.Imp.function_def =
@@ -197,7 +208,6 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let static : Op.static list =
     List.map (fun (c : typ class_def) ->
-      
       (c.name ^ "$descriptor",
         (match c.parent with
         | None   -> Op.Cst 0

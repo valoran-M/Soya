@@ -17,6 +17,7 @@
         "function",   FUNCTION;
         "class",      CLASS;
         "attribute",  ATTRIBUTE;
+        "static",     STATIC;
         "method",     METHOD;
         "this",       THIS;
         "super",      SUPER;

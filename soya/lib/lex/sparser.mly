@@ -29,7 +29,7 @@
 %token <string> IDENT
 %token TYP_INT TYP_BOOL TYP_VOID TYP_CHAR
 %token VAR FUNCTION ABSTRACT
-%token ATTRIBUTE METHOD EXTENDS CLASS THIS SUPER
+%token ATTRIBUTE METHOD STATIC EXTENDS CLASS THIS SUPER
 %token DOT NEW LBRACKET RBRACKET
 %token LPAR RPAR BEGIN END COMMA SEMI
 %token PUTCHAR SET IF ELSE WHILE RETURN INSTANCEOF
@@ -71,16 +71,17 @@ decl:
 
 class_def:
 | CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
-    BEGIN fields=list(attribute_decl) methods=list(method_def) END 
-  { { name; fields; methods;
+    BEGIN fields=list(attribute_decl) m=methods_def END 
+  { let methods, static = m in
+    { name; fields; methods; static;
       parent = set_parent parent (mk_loc $loc(parent));
       abstract = false;
       loc = mk_loc $sloc;
       abs_methods = [] } }
 | ABSTRACT CLASS name=IDENT parent=option(EXTENDS p=IDENT { p })
-    BEGIN fields=list(attribute_decl) methods=abs_methods_def END 
-  {  let methods, abs_methods = methods in
-    { name; fields; methods;
+    BEGIN fields=list(attribute_decl) m=abs_methods_def END 
+  { let methods, static, abs_methods  = m in
+    { name; fields; methods; static;
       parent = set_parent parent (mk_loc $loc(parent));
       abstract = true;
       loc = mk_loc $sloc;
@@ -113,16 +114,21 @@ function_def:
 ;
 
 abs_methods_def:
-| {  [], [] }
-| mdef=method_def a=abs_methods_def { let m, a = a in mdef :: m, a }
+| {  [], [], [] }
+| STATIC METHOD mdef=fun_def m=abs_methods_def
+  { let m, s, a = m in m, mdef :: s, a}
+| METHOD mdef=fun_def m=abs_methods_def
+  { let m, s, a = m in mdef :: m, s, a}
 | ABSTRACT METHOD return=typ name=IDENT
   LPAR params=separated_list(COMMA, typed_ident) RPAR SEMI a=abs_methods_def
-    { let m, a = a in
-      m, {name; code=[]; params; return; locals=[]} :: a }
+  { let m, s, a = a in
+    m, s, {name; code=[]; params; return; locals=[]} :: a }
 
 
-method_def:
-| METHOD mdef=fun_def { mdef }
+methods_def:
+| { [], [] }
+| STATIC METHOD mdef=fun_def m = methods_def { fst m, mdef :: snd m }
+|        METHOD mdef=fun_def m = methods_def { mdef :: fst m, snd m }
 ;
 
 fun_def:

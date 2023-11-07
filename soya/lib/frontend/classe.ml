@@ -37,6 +37,12 @@ let get_method envc c m mloc =
   | Some m -> m
   | None -> Error_soy.Error.undeclared_methode mloc m
 
+let get_static_method envc c m mloc =
+  let c = Hashtbl.find envc c in
+  match List.find_opt (fun (e : 'a function_def) -> e.name = m) c.static with
+  | Some m -> m
+  | None -> Error_soy.Error.undeclared_methode mloc m
+
 let get_field envc c f loc =
   let c = Hashtbl.find envc c in
   match List.find_opt (fun (e, _) -> e = f) c.fields with

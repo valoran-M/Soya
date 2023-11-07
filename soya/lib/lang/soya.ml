@@ -60,11 +60,15 @@ type 'a function_def = {
 type 'a class_def = {
   name:         string;
   fields:       (string * typ) list;
-  methods:      'a function_def list;
   parent:       (string * location) option;
+
+  methods:      'a function_def list;
+  static:       'a function_def list;
+
   abstract:     bool;
-  loc:          location;
   abs_methods:  'a function_def list;
+
+  loc:          location;
 }
 
 (* Program as in IMP + types + user-defined  *)

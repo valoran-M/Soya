@@ -130,11 +130,18 @@ let type_check (prog : location program) =
     mk_expr f.return (Call (f.name, args))
 
   and type_method c f args loc env =
-    let ct    = type_expr TVoid c env in
-    let s     = get_class_name ct.annot c.annot in
-    let m     = get_method envc s f loc in
-    let args  = type_args args m loc env in
-    mk_expr m.return (MCall (ct, f, args))
+    match c.expr with
+    | Var v when not (Env.mem v env) -> (* static method *)
+      let c = get_class v c.annot in
+      let m = get_static_method envc v f loc in
+      let args  = type_args args m loc env in
+      mk_expr m.return (Call (f ^ "$" ^ c.name, args))
+    | _ ->
+      let ct    = type_expr TVoid c env in
+      let s     = get_class_name ct.annot c.annot in
+      let m     = get_method envc s f loc in
+      let args  = type_args args m loc env in
+      mk_expr m.return (MCall (ct, f, args))
 
   and type_constructor cn args loc env =
     let c = get_class cn loc in
@@ -230,10 +237,11 @@ let type_check (prog : location program) =
   in
 
   let type_class (c : location class_def) =
+    let static = List.map (type_function env) c.static in
     let env = Env.add "this" (TClass c.name) env in
     let env, c =
       match c.parent with
-      | None   -> env, c
+      | None -> env, c
       | Some (cn, loc) ->
         let pc = get_class cn loc in
         let c = if pc.abstract then check_abstract pc c else c in
@@ -242,7 +250,7 @@ let type_check (prog : location program) =
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in
     let fields = merge_fields envc c.name [] in
-    { c with fields; methods; abs_methods = [] }
+    { c with fields; methods; static; abs_methods = [] }
   in
 
 (* Prog --------------------------------------------------------------------- *)
