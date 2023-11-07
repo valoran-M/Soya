@@ -1,6 +1,7 @@
 type binop =
   | Add | Sub | Mul
   | Lt
+  | And | Or
 
 type expression =
   | Char  of int 

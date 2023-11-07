@@ -23,6 +23,7 @@ type operation =
   | OAdd | OSub
   | OMul
   | OLt
+  | OAnd | OOr
 
 type condition =
   | CEqi of int | CNeqi of int

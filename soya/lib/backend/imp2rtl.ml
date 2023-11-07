@@ -84,6 +84,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
         | Sub -> Lang.Op.OSub
         | Add -> Lang.Op.OAdd | Mul -> Lang.Op.OMul
         | Lt  -> Lang.Op.OLt
+        | And -> Lang.Op.OAnd | Or -> Lang.Op.OOr
       in
       let r1 = new_reg () in
       let r2 = new_reg () in

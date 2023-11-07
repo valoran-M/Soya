@@ -86,6 +86,11 @@ let type_check (prog : location program) =
       let e2t = type_expr TInt e2 env in
       check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
       mk_expr TBool (Binop (op, e1t, e2t))
+    | Binop ((And | Or as op), e1, e2) ->
+      let e1t = type_expr TBool e1 env in
+      let e2t = type_expr TBool e2 env in
+      check_type e1.annot e1t.annot TBool; check_type e2.annot e2t.annot TBool;
+      mk_expr TBool (Binop (op, e1t, e2t))
     | Instanceof (e, (c, a)) ->
       let cn = (get_class c a).name in
       let et = type_expr TVoid e env in

@@ -21,7 +21,7 @@
 %}
 
 %token SUB PLUS STAR
-%token LT
+%token LT AND OR
 
 %token <char> CHAR
 %token <int> CST
@@ -35,11 +35,12 @@
 %token PUTCHAR SET IF ELSE WHILE RETURN INSTANCEOF
 %token EOF
 
-%left LT
-%left INSTANCEOF
-%left PLUS
-%left SUB 
-%left STAR
+%left     OR
+%left     AND
+%left     LT
+%left     INSTANCEOF
+%left     PLUS SUB 
+%left     STAR
 %nonassoc LBRACKET DOT
 
 %start program
@@ -184,6 +185,8 @@ expression:
 | PLUS  { Lang.Imp.Add }
 | SUB   { Lang.Imp.Sub }
 | STAR  { Lang.Imp.Mul }
+| AND   { Lang.Imp.And }
+| OR    { Lang.Imp.Or }
 | LT    { Lang.Imp.Lt }
 ;
 

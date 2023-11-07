@@ -29,5 +29,7 @@ let print_op print_reg ppf args =
   | OSub,     [r1; r2] -> fprintf ppf "%a - %a" print_reg r1 print_reg r2
   | OMul,     [r1; r2] -> fprintf ppf "%a * %a" print_reg r1 print_reg r2
   | OLt,      [r1; r2] -> fprintf ppf "%a < %a" print_reg r1 print_reg r2
+  | OAnd,     [r1; r2] -> fprintf ppf "%a & %a" print_reg r1 print_reg r2
+  | OOr,      [r1; r2] -> fprintf ppf "%a | %a" print_reg r1 print_reg r2
   | _, _ -> assert false
 

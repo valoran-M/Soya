@@ -57,6 +57,8 @@ let init_const (f : pseudo function_def) =
     | OMul, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
     | OLt,  [r1; r2]  ->
       two_reg r1 r2 rd (fun i1 i2 -> if i1 <= i2 then 1 else 0) c_in
+    | OAnd, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
+    | OOr,  [r1; r2]  -> two_reg r1 r2 rd (fun i1 i2 -> (i1 + i2) mod 2) c_in
     | _ -> assert false
   in
 
@@ -216,6 +218,10 @@ let tr_program (prog : pseudo program) =
       | OLt,  [r1; r2]  ->
         two_reg r1 r2 (fun i1 i2 -> if i1 <= i2 then 1 else 0)
           (fun _ _ -> IOp (OLt, args, rd, dest))
+      | OAnd, [r1; r2]  -> two_reg r1 r2 ( * )(fun _ _ ->(IOp(op,args,rd,dest)))
+      | OOr,  [r1; r2]  ->
+        two_reg r1 r2 (fun i1 i2 -> (i1 + i2) mod 2) 
+          (fun _ _ ->(IOp(op,args,rd,dest)))
       | _ -> assert false
     in
 

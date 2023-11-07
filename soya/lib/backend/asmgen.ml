@@ -23,6 +23,8 @@ let tr_function (fdef : Linear.function_def) =
     | OSub,      [r1; r2] -> sub r r1 r2
     | OMul,      [r1; r2] -> mul r r1 r2
     | OLt,       [r1; r2] -> slt r r1 r2
+    | OOr,       [r1; r2] -> or_ r r1 r2
+    | OAnd,      [r1; r2] -> and_ r r1 r2
     | _ -> assert false
   in
   
