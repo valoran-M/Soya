@@ -136,8 +136,17 @@ let gen_prog (prog : Lang.Linear.program) : program =
     @@ jr   ra
   
     @@ S "\n"
+    @@ comment " a0 : class descriptor of e"
+    @@ comment " a1 : class descriptor of C"
+    @@ comment " returun : e instanceof C"
     @@ label "instanceof"
+    @@ beq a0 a1 "instanceof$true"
+    @@ lw a0 0 a0
+    @@ bnez a0 "instanceof"
     @@ li v0 0
+    @@ jr ra
+    @@ label "instanceof$true"
+    @@ li v0 1
     @@ jr ra
 
     @@ S "\n\n"
