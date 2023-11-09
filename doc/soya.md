@@ -1,8 +1,8 @@
-# Soya langage
+# Soya language
 
-Soya is an imperative object oriented langage.
+Soya is an imperative object oriented language.
 
-We have two type of stuctures :
+We have two type of structures :
 - Primitive type
 - Object
 
