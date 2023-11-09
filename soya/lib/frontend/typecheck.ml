@@ -62,7 +62,7 @@ let type_check (prog : location program) =
 
   let check_type l t exp =
     match t, exp with
-    | TInt, TChar -> ()
+    | TChar, TInt | TInt, TChar -> ()
     | TClass c, TClass cexp -> 
       if instanceof c cexp l
       then ()
