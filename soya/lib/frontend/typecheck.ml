@@ -274,8 +274,6 @@ let type_check (prog : location program) =
     in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in
-    Printf.printf "%s\n" c.name;
-    List.iter (fun (f : typ function_def) -> Printf.printf "\t%s\n" f.name) methods;
     let fields = merge_fields envc c.name [] in
     { c with fields; methods; static; abs_methods = [] }
   in
