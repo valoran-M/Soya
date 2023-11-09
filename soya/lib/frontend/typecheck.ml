@@ -62,7 +62,7 @@ let type_check (prog : location program) =
 
   let check_type l t exp =
     match t, exp with
-    | TInt, TChar | TChar, TInt -> ()
+    | TInt, TChar -> ()
     | TClass c, TClass cexp -> 
       if instanceof c cexp l
       then ()
@@ -189,7 +189,7 @@ let type_check (prog : location program) =
   let rec type_instruction i (ret: typ) env : typ instruction =
     match i with
     | Putchar e ->
-      let et = type_expr TInt e env in
+      let et = type_expr TChar e env in
       Putchar et
     | Set (s, sloc, e) ->
       let t  = get_var_type s sloc env in
