@@ -170,7 +170,7 @@ You can change the static type of an object, under certain conditions :
 o1 _ = new o2();
 ```
 
-- if you test if you object if an instance of the destination object.
+- if you test if you object is an instance of the destination object.
 
 Example (`c` an object):
 
