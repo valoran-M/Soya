@@ -2,6 +2,8 @@
 
 A compiler from Soya to Mips
 
+The docuemention of Soya language is [here](./doc/soya.md)
+
 ## Args
 
 - `-o [file]` Name of output file
