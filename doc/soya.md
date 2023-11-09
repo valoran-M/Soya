@@ -97,7 +97,7 @@ class point {
 
 ## Imperative
 
-### fucntion
+### function
 
 You can declared functions
 
