@@ -21,31 +21,36 @@ let rec merge_methods envm (prog : typ program) (c: typ class_def) =
       let m = merge_methods envm prog p in
       let m = List.fold_left
         (fun (nm:(string * typ function_def) list) (_,(m:typ function_def)) ->
-          if m.name = "constructor" then nm
-          else
-            match List.find_opt
-                  (fun (_, (cm : typ function_def)) -> cm.name = m.name) nm with
-            | None -> (p.name , m) :: nm
-            | Some rm -> (c.name, snd rm) :: (List.filter
-                (fun (_, (m : typ function_def)) -> m.name = (snd rm).name) nm)
+          match List.find_opt
+            (fun (_, (cm : typ function_def)) -> cm.name = m.name) nm with
+          | None -> (p.name , m) :: nm
+          | Some (_, rm) ->
+            (c.name, rm) ::
+            (List.filter (fun (_,(m:'a function_def)) -> m.name <> rm.name) nm)
         ) cm m in
       Hashtbl.add envm c.name m; m
 
-let get_method envc c m mloc =
+let rec get_method envc c m mloc =
   let c = Hashtbl.find envc c in
   match List.find_opt (fun (e : 'a function_def) -> e.name = m) c.methods with
   | Some m -> m
-  | None -> Error_soy.Error.undeclared_methode mloc m
+  | None   ->
+    match c.parent with
+    | Some (p, _) -> get_method envc p m mloc
+    | None        -> Error_soy.Error.undeclared_methode mloc m
 
 let get_static_method envc c m mloc =
   let c = Hashtbl.find envc c in
   match List.find_opt (fun (e : 'a function_def) -> e.name = m) c.static with
   | Some m -> m
-  | None -> Error_soy.Error.undeclared_methode mloc m
+  | None   -> Error_soy.Error.undeclared_methode mloc m
 
-let get_field envc c f loc =
+let rec get_field envc c f loc =
   let c = Hashtbl.find envc c in
   match List.find_opt (fun (e, _) -> e = f) c.fields with
   | Some f -> f
-  | None   -> Error_soy.Error.undeclared_field loc f
+  | None   ->
+    match c.parent with
+    | Some (p, _) -> get_field envc p f loc
+    | None        -> Error_soy.Error.undeclared_field loc f
 

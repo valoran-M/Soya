@@ -1,0 +1,54 @@
+class point {
+  attribute int x;
+  attribute int y;
+  method void constructor(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+  method int sum(int x) {
+    return (x+this.x+this.y);
+  }
+}
+
+class point3 extends point {
+  attribute int z;
+
+  method void constructor(int x, int y, int z) {
+    super(x, y);
+    this.z = z;
+  }
+
+  method int sum(int x) {
+    return super.sum(x) + this.z;
+  }
+}
+
+class point4 extends point3 {
+  attribute int w;
+
+  method void constructor(int x, int y, int z, int w) {
+    super(x, y, z);
+    this.w = w;
+  }
+
+  method int sum(int x) {
+    return super.sum(x) + this.w;
+  }
+
+  method int scalar_prod(point4 p2) {
+    return this.x * p2.x + this.y * p2.y + this.z * p2.z + this.w + p2.w;
+  }
+}
+
+
+function void main() {
+  int x = 0;
+  point4 p1 = new point4(1, 1, 1, 2);
+  point3 p2 = new point3(1, 2, 3);
+ if (p2 instanceof point4) {
+    x = p1.scalar_prod(p2);
+    putchar('0');
+  } else {
+    putchar('x');
+  }
+}

@@ -39,6 +39,12 @@ let type_check (prog : location program) =
     | None   -> Error_soy.Error.undeclared_var loc v
   in
 
+  let unsafe_get_class t =
+    match t with
+    | TClass s -> Hashtbl.find envc s
+    | _ -> assert false
+  in
+
 
 (* type checker ------------------------------------------------------------- *)
   let instanceof c cexp loc =
@@ -67,6 +73,21 @@ let type_check (prog : location program) =
       then ()
       else Error_soy.Error.type_error l t exp
   in
+
+  let rec down_cast_condition (c : typ expression) loc (envt, envf) =
+    match c.expr with
+    | Binop (And, c1, c2)    ->
+      down_cast_condition c2 loc (down_cast_condition c1 loc (envt, envf))
+    | Instanceof (c, (i, _)) ->
+      (match c.expr with
+      | Var v ->
+        let c = unsafe_get_class c.annot in
+        if not (instanceof c.name i loc) then
+          (Env.add v (TClass i) envt), envf
+        else envt, envf
+      | _ -> envt, envf)
+    | _ -> envt, envf
+ in
 
 (* AST typer ---------------------------------------------------------------- *)
 
@@ -118,6 +139,7 @@ let type_check (prog : location program) =
     try
       List.fold_left2 (fun n arg (_, t) ->
           let e = type_expr t arg env in
+          check_type arg.annot e.annot t;
           e :: n
         ) [] args f.params
     with Invalid_argument _ ->
@@ -176,9 +198,12 @@ let type_check (prog : location program) =
       Set (s, sloc, et)
     | If (c, e1, e2) ->
       let ct = type_expr TBool c env in
-      If (ct, type_sequence e1 ret env, type_sequence e2 ret env)
+      check_type c.annot TBool ct.annot;
+      let envt, envf = down_cast_condition ct c.annot (env, env) in
+      If (ct, type_sequence e1 ret envt, type_sequence e2 ret envf)
     | While (c, e) ->
       let ct = type_expr TBool c env in
+      check_type c.annot TBool ct.annot;
       While (ct, type_sequence e ret env)
     | Return e ->
       let et = type_expr ret e env in
@@ -249,6 +274,8 @@ let type_check (prog : location program) =
     in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in
+    Printf.printf "%s\n" c.name;
+    List.iter (fun (f : typ function_def) -> Printf.printf "\t%s\n" f.name) methods;
     let fields = merge_fields envc c.name [] in
     { c with fields; methods; static; abs_methods = [] }
   in
