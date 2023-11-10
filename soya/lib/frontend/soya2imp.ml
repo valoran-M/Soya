@@ -22,11 +22,9 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let type_size (t : typ) =
     match t with
+    | TVoid -> 0
     | TChar -> 1
-    | TInt | TBool -> 4
-    | TVoid     -> 0
-    | TArray _  -> 4
-    | TClass _  -> 4
+    | _  -> 4
   in
 
   let field_size (c : typ class_def) =
