@@ -16,7 +16,8 @@ let type_check (prog : location program) =
 
   let get_classe_name t loc =
     match t with
-    | TClass s -> s
+    | TStatic s -> s
+    | TClass  s -> s
     | _ -> Error_soy.Error.not_class loc t
   in
 
@@ -41,7 +42,8 @@ let type_check (prog : location program) =
 
   let unsafe_get_classe t =
     match t with
-    | TClass s -> Hashtbl.find envc s
+    | TStatic s -> Hashtbl.find envc s
+    | TClass  s -> Hashtbl.find envc s
     | _ -> assert false
   in
 
@@ -63,7 +65,9 @@ let type_check (prog : location program) =
   let check_type l t exp =
     match t, exp with
     | TChar, TInt | TInt, TChar -> ()
-    | TClass c, TClass cexp -> 
+    | TStatic c, TStatic cexp
+    | TStatic c, TClass  cexp
+    | TClass  c, TClass  cexp -> 
       if instanceof c cexp l
       then ()
       else Error_soy.Error.type_error l t exp
@@ -261,14 +265,14 @@ let type_check (prog : location program) =
 
   let type_class (c : location class_def) =
     let static = List.map (type_function env) c.static in
-    let env = Env.add "this" (TClass c.name) env in
+    let env = Env.add "this" (TStatic c.name) env in
     let env, c =
       match c.parent with
       | None -> env, c
       | Some (cn, loc) ->
         let pc = get_classe cn loc in
         let c = if pc.abstract then check_abstract pc c else c in
-        Env.add "super" (TClass pc.name) env, c
+        Env.add "super" (TStatic pc.name) env, c
     in
     Hashtbl.add envc c.name c;
     let methods = List.map (type_function env) c.methods in

@@ -1,0 +1,33 @@
+class point {
+  attribute int x;
+  attribute int y;
+  method void constructor(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+  method int sum(int x) {
+    return (x+this.x+this.y);
+  }
+}
+
+class point3 extends point {
+  attribute int z;
+
+  method void constructor(int x, int y, int z) {
+    super(x, y);
+    this.z = z;
+  }
+
+  method int sum3(int x) {
+    return this.sum(x) + this.z;
+  }
+}
+
+function void main() {
+  point3 p = new point3(1, 1, 1);
+  int c = p.sum3(48);
+  putchar(c);
+}
+
+// prints '3'
+

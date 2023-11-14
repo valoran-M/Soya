@@ -16,7 +16,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
 
   let type_to_class t =
     match t with
-    | TClass c -> get_class c
+    | TStatic c | TClass c -> get_class c
     | _ -> assert false
   in
 
@@ -44,6 +44,16 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     match f with
     | Some o -> o
     | None -> assert false
+  in
+
+  let rec get_class_of_method s f =
+    let s = get_class s in
+    if List.exists (fun (f' : 'a function_def) -> f'.name = f) s.methods
+    then s.name
+    else
+      match s.parent with
+      | Some (p, _) -> get_class_of_method p f
+      | None -> assert false
   in
 
   let envm = Hashtbl.create 16 in
@@ -97,18 +107,19 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     ) ([],[]) a
 
   and tr_mcall o s args =
-    match o.expr with
-    | Super | This ->
-      let c = type_to_class o.annot in
-      let a, d = tr_args args in
-      Call (s ^ "$" ^ c.name, Var "this" :: a), d
+    match o.annot with
+    | TStatic cname ->
+      let c, dc = tr_expression o in
+      let a, da = tr_args args in
+      let cname = get_class_of_method cname s in
+      Imp.Call (s  ^ "$" ^ cname, c :: a), dc @ da
     | _ ->
       let c, dc = tr_expression o in
       let a, da = tr_args args in
       let f = Imp.Binop (Add, Deref(c, Word),
                               Cst (get_method_offset o.annot s)) in
       Imp.DCall (Deref (f, Word), c :: a), dc @ da
-  
+
   and tr_mem (m : typ mem) =
     match m with
     | Arr (a, o) ->
@@ -120,7 +131,7 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       Binop (Mul, Cst case_size, o)), size, da @ dob
     | Atr (st, f, _) ->
       match st.annot with
-      | TClass s ->
+      | TClass s | TStatic s ->
         let st, dst = tr_expression st in
         Binop (Add, Cst (get_class_offset s f), st), Word, dst
       | _        -> assert false
