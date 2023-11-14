@@ -37,12 +37,10 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Cst  n, Some reg -> push_node (IOp ((OConst n), [], reg, dest))
     | Bool b, Some reg -> push_node (IOp ((OConst (if b then 1 else 0)), [], reg, dest))
     | Addr l, Some reg -> push_node (IOp (OLabel l, [], reg, dest))
+    | Deref (e, s), Some reg -> tr_deref e s reg dest
     | Alloc e, Some reg ->
       let r = new_reg () in
       tr_expression e (Some r) (push_node (IAlloc (r, Some reg, dest)))
-    | Deref (e, s), Some reg ->
-      let r = new_reg () in
-      tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, s, dest)))
     | Var  v, Some reg ->
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
@@ -75,6 +73,16 @@ let tr_function (fdef : Lang.Imp.function_def) =
         (ICall (Addr s, args, List.length args, reg, dest));
       entry
     | _, None -> dest
+  
+  and tr_deref (e : expression) s reg dest =
+    let r = new_reg () in
+    match e with
+    | Binop (Add, Cst c, e) | Binop (Add, e, Cst c) ->
+      tr_expression e (Some r)
+        (push_node (ILoad ((AddrOReg (c, r)), reg, s, dest)))
+    | _ ->
+      tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, s, dest)))
+
   and tr_binop (op : binop) e1 e2 reg dest =
     match reg with
     | None -> tr_expression e1 None (tr_expression e2 None dest)

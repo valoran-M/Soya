@@ -80,6 +80,7 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
         add_succ id n;
         add_def_use id [rd] args;
         init id n
+      | ILoad (AddrOReg (_, r), rd, _, n)
       | ILoad (AddrReg r, rd, _, n) ->
         incr_reg r; incr_reg rd;
         add_succ id n;
