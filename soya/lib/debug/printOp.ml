@@ -3,10 +3,11 @@ open Lang.Op
 
 let print_addr ppf print_reg addr =
   match addr with
-  | Addr id      -> fprintf ppf "\"%s\"" id
-  | AddrReg r    -> fprintf ppf "0(%a)" print_reg r
-  | AddrStack i  -> fprintf ppf "%d(sp)" i
-  | AddrGlobl id -> fprintf ppf "\"%s\"" id
+  | Addr id         -> fprintf ppf "\"%s\"" id
+  | AddrReg r       -> fprintf ppf "0(%a)" print_reg r
+  | AddrOReg (i,r)  -> fprintf ppf "%d(%a)" i print_reg r
+  | AddrStack i     -> fprintf ppf "%d(sp)" i
+  | AddrGlobl id    -> fprintf ppf "\"%s\"" id
 
 let print_cond print_reg ppf args =
   match args with

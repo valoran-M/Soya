@@ -35,6 +35,20 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       | Regalloc.Reg r   -> Reg r
   in
 
+  let tr_addr = function
+    | Lang.Op.Addr i -> Lang.Op.Addr i, None
+    | Lang.Op.AddrStack i -> Lang.Op.AddrStack i, None
+    | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i, None
+    | Lang.Op.AddrOReg (i, r) ->(
+      match get_reg r with
+      | Reg r -> Lang.Op.AddrOReg (i, r), None
+      | Spill n -> Lang.Op.AddrOReg (i, Mips.t8), Some n)
+    | Lang.Op.AddrReg r ->
+      match get_reg r with
+      | Reg r -> Lang.Op.AddrReg r, None
+      | Spill n -> Lang.Op.AddrReg Mips.t8, Some n
+  in
+
   let rec tr_instruction i =
     match Hashtbl.find_opt id_env i with
     | Some i' -> i'
@@ -64,31 +78,13 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       Hashtbl.replace code nid node;
       nid
   and tr_call a i dest =
-    let addr, spilled =
-      match a with
-      | Lang.Op.Addr i -> Lang.Op.Addr i, None
-      | Lang.Op.AddrStack i -> Lang.Op.AddrStack i, None
-      | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i, None
-      | Lang.Op.AddrReg r ->
-        match get_reg r with
-        | Reg r -> Lang.Op.AddrReg r, None
-        | Spill n -> Lang.Op.AddrReg Mips.t8, Some n
-    in
+    let addr, spilled = tr_addr a in
     match spilled with
     | None    -> push_node (ICall (addr, i, dest))
     | Some n  -> push_node (ILoad (spill_addr n, Mips.t8, Word,
                  push_node (ICall (addr, i, dest))))
   and tr_load a r s dest =
-    let addr, spilled =
-      match a with
-      | Lang.Op.Addr i -> Lang.Op.Addr i, None
-      | Lang.Op.AddrStack i -> Lang.Op.AddrStack i, None
-      | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i, None
-      | Lang.Op.AddrReg r ->
-        match get_reg r with
-        | Reg r -> Lang.Op.AddrReg r, None
-        | Spill n -> Lang.Op.AddrReg Mips.t8, Some n
-    in
+    let addr, spilled = tr_addr a in
     let dest =
       match get_reg r with
       | Reg r   -> push_node (ILoad (addr, r, s, dest))
@@ -98,17 +94,9 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     match spilled with
     | None -> dest
     | Some n -> push_node (ILoad (spill_addr n, Mips.t8, s, dest))
+
   and tr_store a r s dest =
-    let addr, spilled =
-      match a with
-      | Lang.Op.Addr i -> Lang.Op.Addr i, None
-      | Lang.Op.AddrStack i -> Lang.Op.AddrStack i, None
-      | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i, None
-      | Lang.Op.AddrReg r ->
-        match get_reg r with
-        | Reg r -> Lang.Op.AddrReg r, None
-        | Spill n -> Lang.Op.AddrReg Mips.t8, Some n
-    in
+    let addr, spilled = tr_addr a in
     let dest =
       match get_reg r with
       | Reg r   -> push_node (IStore (addr, r, s, dest))
@@ -118,24 +106,28 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
     match spilled with
     | None -> dest
     | Some n -> push_node (ILoad (spill_addr n, Mips.t8, s, dest))
+
   and tr_get_param regs i nb_pushed dest =
     let addr = AddrStack ((i + 1 - nb_pushed) * 4 + stack_size) in
     match get_reg regs with
     | Reg r   -> push_node (ILoad (addr, r, Word, dest))
     | Spill n -> push_node (ILoad (addr, Mips.t8, Word, push_node
                            (IStore (spill_addr n, Mips.t8, Word, dest))))
+
   and tr_set_param regs i nb_pushed dest =
     let addr = AddrStack ((i + 1 - nb_pushed) * 4) in
     match get_reg regs with
     | Reg r   -> push_node (IStore (addr, r, Word, dest))
     | Spill n -> push_node (ILoad (addr, Mips.t8, Word, push_node
                            (IStore (spill_addr n, Mips.t8, Word, dest))))
-  and tr_putchar r dest=
+
+  and tr_putchar r dest =
     match get_reg r with
     | Reg r   -> push_node (IPutchar (r, dest))
     | Spill n -> push_node (ILoad (spill_addr n, Mips.t8, Word, push_node
                            (IPutchar (Mips.t8, dest))))
-  and tr_alloc r dest=
+
+  and tr_alloc r dest =
     match get_reg r with
     | Reg r   -> push_node (IAlloc (r, dest))
     | Spill n -> push_node (ILoad (spill_addr n, Mips.t8, Word, push_node
@@ -167,6 +159,7 @@ let tr_function (def : Lang.Rtl.pseudo_reg Lang.Rtl.function_def) =
       | Reg _   -> dest
       | Spill n -> push_node (ILoad (spill_addr n, r, Word, dest)))
     dest args regs
+
   and tr_op op args r dest =
     let regs = fst (List.fold_right (fun r (a, t) -> 
       match get_reg r with

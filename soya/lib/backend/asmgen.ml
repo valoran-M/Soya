@@ -46,10 +46,11 @@ let tr_function (fdef : Linear.function_def) =
   in
   let tr_load a r s =
     match a with
-    | Addr l      -> la r l @@ (size_load s) r 0 r
-    | AddrReg ra  -> (size_load s) r 0 ra
-    | AddrGlobl l -> la r l @@ (size_load s) r 0 r
-    | AddrStack i -> (size_load s) r i sp
+    | Addr l          -> la r l @@ (size_load s) r 0 r
+    | AddrReg ra      -> (size_load s) r 0 ra
+    | AddrOReg (i,ra) -> (size_load s) r i ra
+    | AddrGlobl l     -> la r l @@ (size_load s) r 0 r
+    | AddrStack i     -> (size_load s) r i sp
   in
 
   let size_store size =
@@ -59,18 +60,20 @@ let tr_function (fdef : Linear.function_def) =
   in
   let tr_store a r s =
     match a with
-    | Addr l      -> la t9 l @@ (size_store s) r 0 t9
-    | AddrReg ra  -> (size_store s) r 0 ra
-    | AddrGlobl l -> la t9 l @@ (size_store s) r 0 t9
-    | AddrStack i -> (size_store s) r i sp
+    | Addr l          -> la t9 l @@ (size_store s) r 0 t9
+    | AddrReg ra      -> (size_store s) r 0 ra
+    | AddrOReg (i,ra) -> (size_store s) r i ra
+    | AddrGlobl l     -> la t9 l @@ (size_store s) r 0 t9
+    | AddrStack i     -> (size_store s) r i sp
   in
 
   let tr_call a =
     match a with
-    | Addr i      -> jal i
-    | AddrReg r   -> jalr r
-    | AddrStack i -> addi t8 sp i @@ jalr t8
-    | AddrGlobl i -> jal i
+    | Addr i        -> jal i
+    | AddrReg r     -> jalr r
+    | AddrOReg (i,r)-> addi r r i @@ jalr r
+    | AddrStack i   -> addi t8 sp i @@ jalr t8
+    | AddrGlobl i   -> jal i
   in
 
   let tr_instruction (i: Linear.instruction) =

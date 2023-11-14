@@ -48,10 +48,11 @@ let tr_function (fdef : pseudo function_def) : pseudo_reg function_def =
 
   let tr_addresse a =
     match a with
-    | Lang.Op.AddrReg r   -> Lang.Op.AddrReg (reg r)
-    | Lang.Op.Addr i      -> Lang.Op.Addr i
-    | Lang.Op.AddrStack i -> Lang.Op.AddrStack i
-    | Lang.Op.AddrGlobl i -> Lang.Op.AddrGlobl i
+    | Lang.Op.AddrReg r       -> Lang.Op.AddrReg (reg r)
+    | Lang.Op.AddrOReg (i, r) -> Lang.Op.AddrOReg (i, reg r)
+    | Lang.Op.Addr i          -> Lang.Op.Addr i
+    | Lang.Op.AddrStack i     -> Lang.Op.AddrStack i
+    | Lang.Op.AddrGlobl i     -> Lang.Op.AddrGlobl i
   in
 
   let push_callee_save dest =

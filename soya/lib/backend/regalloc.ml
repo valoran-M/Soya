@@ -49,7 +49,8 @@ let get_liveness (rtl_fun : pseudo_reg function_def) =
   in
 
   let addr_use = function
-    | Lang.Op.AddrReg r -> [r]
+    | Lang.Op.AddrReg r       -> [r]
+    | Lang.Op.AddrOReg (_, r) -> [r]
     | _ -> []
   in
 

@@ -10,6 +10,7 @@ type mem_size =
 type 'reg address =
   | Addr        of ident
   | AddrReg     of 'reg
+  | AddrOReg    of int * 'reg
   | AddrStack   of int
   | AddrGlobl   of ident
 
