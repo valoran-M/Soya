@@ -11,6 +11,8 @@ let tr_function (fdef : Ltl.function_def) =
     | CEq       -> CNeq
     | CNeq      -> CEq
     | CLt       -> CGe
+    | CLe       -> CGt
+    | CGt       -> CLe
     | CGe       -> CLt
     | CConst _  -> assert false
   in

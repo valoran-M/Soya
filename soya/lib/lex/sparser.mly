@@ -21,7 +21,7 @@
 %}
 
 %token SUB PLUS STAR
-%token LT AND OR
+%token LT LE GT GE EQ NEQ AND OR
 
 %token <char> CHAR
 %token <int> CST
@@ -37,7 +37,8 @@
 
 %left     OR
 %left     AND
-%left     LT
+%left     EQ NEQ
+%left     LT LE GT GE
 %left     INSTANCEOF
 %left     PLUS SUB 
 %left     STAR
@@ -194,5 +195,10 @@ expression:
 | AND   { Lang.Imp.And }
 | OR    { Lang.Imp.Or }
 | LT    { Lang.Imp.Lt }
+| LE    { Lang.Imp.Le }
+| GT    { Lang.Imp.Gt }
+| GE    { Lang.Imp.Ge }
+| EQ    { Lang.Imp.Eq }
+| NEQ   { Lang.Imp.Neq }
 ;
 

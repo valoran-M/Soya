@@ -78,6 +78,21 @@ let type_check (prog : location program) =
       else Error_soy.Error.type_error l t exp
   in
 
+  let eq_type l t1 t2 =
+    match t1, t2 with
+    | TBool, TBool
+    | TInt,  TInt
+    | TChar, TChar -> ()
+    | _ ->
+      if t1 = t2 then
+        Error_soy.Error.raise_type_error l
+          (Printf.sprintf "%s or %s is not a base type"
+            (Error_soy.Error.type_to_string t1)
+            (Error_soy.Error.type_to_string t2))
+      else
+        Error_soy.Error.type_error l t1 t2
+  in
+
   let rec down_cast_condition (c : typ expression) loc (envt, envf) =
     match c.expr with
     | Binop (And, c1, c2)    ->
@@ -106,7 +121,7 @@ let type_check (prog : location program) =
       let e2t = type_expr e2 env in
       check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
       mk_expr TInt (Binop (op, e1t, e2t))
-    | Binop (Lt as op, e1, e2) ->
+    | Binop ((Lt | Le | Gt | Ge) as op, e1, e2) ->
       let e1t = type_expr e1 env in
       let e2t = type_expr e2 env in
       check_type e1.annot e1t.annot TInt; check_type e2.annot e2t.annot TInt;
@@ -115,6 +130,11 @@ let type_check (prog : location program) =
       let e1t = type_expr e1 env in
       let e2t = type_expr e2 env in
       check_type e1.annot e1t.annot TBool; check_type e2.annot e2t.annot TBool;
+      mk_expr TBool (Binop (op, e1t, e2t))
+    | Binop ((Eq | Neq as op), e1, e2) ->
+      let e1t = type_expr e1 env in
+      let e2t = type_expr e2 env in
+      eq_type expr.annot e1t.annot e2t.annot;
       mk_expr TBool (Binop (op, e1t, e2t))
     | Instanceof (e, (c, a)) ->
       let cn = (get_classe c a).name in

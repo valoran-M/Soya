@@ -23,7 +23,12 @@ let tr_function (fdef : Linear.function_def) =
     | OSub,      [r1; r2] -> sub r r1 r2
     | OMul,      [r1; r2] -> mul r r1 r2
     | OLt,       [r1; r2] -> slt r r1 r2
+    | OLe,       [r1; r2] -> sle r r1 r2
+    | OGt,       [r1; r2] -> sgt r r1 r2
+    | OGe,       [r1; r2] -> sge r r1 r2
     | OOr,       [r1; r2] -> or_ r r1 r2
+    | OEq,       [r1; r2] -> seq r r1 r2
+    | ONeq,      [r1; r2] -> sne r r1 r2
     | OAnd,      [r1; r2] -> and_ r r1 r2
     | _ -> assert false
   in
@@ -35,6 +40,8 @@ let tr_function (fdef : Linear.function_def) =
     | CEq,     [r1; r2] -> beq  r1 r2 l
     | CNeq,    [r1; r2] -> bne r1 r2 l
     | CLt,     [r1; r2] -> blt r1 r2 l
+    | CLe,     [r1; r2] -> ble r1 r2 l
+    | CGt,     [r1; r2] -> bgt r1 r2 l
     | CGe,     [r1; r2] -> bge r1 r2 l
     | _ -> assert false
   in

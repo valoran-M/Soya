@@ -23,13 +23,15 @@ type operation =
   | OMulImm of int
   | OAdd | OSub
   | OMul
-  | OLt
+  | OLt  | OLe
+  | OGt  | OGe
+  | OEq  | ONeq
   | OAnd | OOr
 
 type condition =
   | CConst of int
   | CEqi   of int | CNeqi of int
   | CEq | CNeq
-  | CLt | CGe
-
+  | CLt | CLe
+  | CGe | CGt
 

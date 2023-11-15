@@ -55,7 +55,17 @@ let init_const (f : pseudo function_def) =
     | OSub, [r1; r2]  -> two_reg r1 r2 rd ( + ) c_in
     | OMul, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
     | OLt,  [r1; r2]  ->
+      two_reg r1 r2 rd (fun i1 i2 -> if i1 < i2 then 1 else 0) c_in
+    | OLe,  [r1; r2]  ->
       two_reg r1 r2 rd (fun i1 i2 -> if i1 <= i2 then 1 else 0) c_in
+    | OGt,  [r1; r2]  ->
+      two_reg r1 r2 rd (fun i1 i2 -> if i1 > i2 then 1 else 0) c_in
+    | OGe,  [r1; r2]  ->
+      two_reg r1 r2 rd (fun i1 i2 -> if i1 >= i2 then 1 else 0) c_in
+    | OEq,  [r1; r2]  ->
+      two_reg r1 r2 rd (fun i1 i2 -> if i1 = i2 then 1 else 0) c_in
+    | ONeq, [r1; r2]  ->
+      two_reg r1 r2 rd (fun i1 i2 -> if i1 <> i2 then 1 else 0) c_in
     | OAnd, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
     | OOr,  [r1; r2]  -> two_reg r1 r2 rd (fun i1 i2 -> (i1 + i2) mod 2) c_in
     | _ -> assert false
@@ -205,6 +215,8 @@ let tr_program (prog : pseudo program) =
       | CEq,    [r1; r2] -> two_reg r1 r2 cond (= )
       | CNeq,   [r1; r2] -> two_reg r1 r2 cond (<>)
       | CLt,    [r1; r2] -> two_reg r1 r2 cond (< )
+      | CLe,    [r1; r2] -> two_reg r1 r2 cond (<=)
+      | CGt,    [r1; r2] -> two_reg r1 r2 cond (> )
       | CGe,    [r1; r2] -> two_reg r1 r2 cond (>=)
       | _ -> assert false
 

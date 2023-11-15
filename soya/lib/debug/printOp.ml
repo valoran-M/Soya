@@ -16,7 +16,10 @@ let print_cond print_reg ppf args =
   | CNeqi n,  [r1] -> fprintf ppf "%a != %n" print_reg r1 n
   | CEq,  [r1; r2] -> fprintf ppf "%a == %a" print_reg r1 print_reg r2
   | CNeq, [r1; r2] -> fprintf ppf "%a != %a" print_reg r1 print_reg r2
-  | CLt,  [r1; r2] -> fprintf ppf "%a < %a" print_reg r1 print_reg r2
+  | CLt,  [r1; r2] -> fprintf ppf "%a <  %a" print_reg r1 print_reg r2
+  | CLe,  [r1; r2] -> fprintf ppf "%a <= %a" print_reg r1 print_reg r2
+  | CGt,  [r1; r2] -> fprintf ppf "%a >  %a" print_reg r1 print_reg r2
+  | CGe,  [r1; r2] -> fprintf ppf "%a >= %a" print_reg r1 print_reg r2
   | _ -> assert false
 
 let print_op print_reg ppf args =

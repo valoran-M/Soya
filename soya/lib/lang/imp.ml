@@ -1,6 +1,7 @@
 type binop =
   | Add | Sub | Mul
-  | Lt
+  | Lt  | Le  | Ge | Gt
+  | Eq  | Neq
   | And | Or
 
 type expression =

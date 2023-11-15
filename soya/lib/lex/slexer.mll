@@ -57,6 +57,11 @@ rule token = parse
   | "-"   { SUB  }
   | "*"   { STAR }
   | "<"   { LT }
+  | "<="  { LE }
+  | ">"   { GT }
+  | ">="  { GE }
+  | "=="  { EQ }
+  | "!="  { NEQ }
   | "("   { LPAR }
   | ")"   { RPAR }
   | "{"   { BEGIN }

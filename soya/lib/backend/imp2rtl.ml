@@ -91,8 +91,10 @@ let tr_function (fdef : Lang.Imp.function_def) =
         match op with
         | Sub -> Lang.Op.OSub
         | Add -> Lang.Op.OAdd | Mul -> Lang.Op.OMul
-        | Lt  -> Lang.Op.OLt
-        | And -> Lang.Op.OAnd | Or -> Lang.Op.OOr
+        | Lt  -> Lang.Op.OLt  | Le  -> Lang.Op.OLe
+        | Gt  -> Lang.Op.OGt  | Ge  -> Lang.Op.OGe
+        | Eq  -> Lang.Op.OEq  | Neq -> Lang.Op.ONeq
+        | And -> Lang.Op.OAnd | Or  -> Lang.Op.OOr
       in
       let r1 = new_reg () in
       let r2 = new_reg () in
@@ -103,10 +105,20 @@ let tr_function (fdef : Lang.Imp.function_def) =
 
   let rec tr_condition (cond : Lang.Imp.expression) destT destF =
     match cond with
-    | Binop (Lt, e1, e2) ->
+    | Binop ((Lt | Le | Gt | Ge | Eq | Neq as op), e1, e2) ->
+      let op =
+        match op with
+        | Lt  -> Lang.Op.CLt
+        | Le  -> Lang.Op.CLe
+        | Gt  -> Lang.Op.CGt
+        | Ge  -> Lang.Op.CGe
+        | Eq  -> Lang.Op.CEq
+        | Neq -> Lang.Op.CNeq
+        | _ -> assert false
+      in
       let r1 = new_reg () in
       let r2 = new_reg () in
-      let id_cond = push_node (ICond(CLt, [r1; r2], destT, destF)) in
+      let id_cond = push_node (ICond(op, [r1; r2], destT, destF)) in
       let id2 = tr_expression e2 (Some r2) id_cond in
       tr_expression e1 (Some r1) id2
     | Binop (And, c1, c2) ->
