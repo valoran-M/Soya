@@ -45,18 +45,28 @@ let tr_program (prog : pseudo_reg program) =
           (* const_prop *)
           | IMove(rd,r,n)     -> tr_move rd r i (tr_instruction n)
           | IOp(op,rl,r,n)    -> tr_op op rl r i (tr_instruction n)
-          | ICond(c,lr,nt,nf) ->
-            push_node (ICond (c,lr,tr_instruction nt,tr_instruction nf))
+          | ICond(c,lr,nt,nf) -> tr_cond c lr nt nf
+            (* push_node (ICond (c,lr,tr_instruction nt,tr_instruction nf)) *)
         in
         let node = Hashtbl.find code bid in
         Hashtbl.remove code bid;
         Hashtbl.replace code nid node;
         nid
+    and tr_cond c lr nt nf =
+      match c with
+      | Lang.Op.CConst c ->
+        if c = 0
+        then push_node (IGoto (tr_instruction nf))
+        else push_node (IGoto (tr_instruction nt))
+      | _ -> push_node (ICond (c,lr,tr_instruction nt,tr_instruction nf))
+
+
     and tr_move rd r i dest =
       let _, out = Hashtbl.find in_out i in
       if Reg_set.mem rd out
       then push_node (IMove(rd, r, dest))
       else dest
+
     and tr_op op rl rd i dest =
       let _, out = Hashtbl.find in_out i in
       if Reg_set.mem rd out

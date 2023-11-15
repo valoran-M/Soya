@@ -29,21 +29,20 @@ let init_const (f : pseudo function_def) =
   let in_out = Hashtbl.create (Hashtbl.length f.code) in
   Hashtbl.iter (fun i _ -> Hashtbl.add in_out i (env, env)) f.code;
 
-  let one_reg i r rd f c_in =
-    match Env.find r c_in with
-    | Ninit   -> Some (rd, Ninit)
-    | Const c -> Some (rd, (Const (f i c)))
-    | NConst  -> Some (rd, NConst)
-  in
-  
-  let two_reg r1 r2 rd f c_in =
-    match Env.find r1 c_in, Env.find r2 c_in with
-    | Ninit, _  | _, Ninit  -> Some (rd, Ninit)
-    | NConst, _ | _, NConst -> Some (rd, (NConst))
-    | Const c2, Const c1    -> Some (rd, (Const (f c1 c2)))
-  in
 
   let compute_op (op : Lang.Op.operation) rd args c_in =
+    let one_reg i r rd f c_in =
+      match Env.find r c_in with
+      | Ninit   -> Some (rd, Ninit)
+      | Const c -> Some (rd, (Const (f i c)))
+      | NConst  -> Some (rd, NConst)
+    in
+    let two_reg r1 r2 rd f c_in =
+      match Env.find r1 c_in, Env.find r2 c_in with
+      | Ninit, _  | _, Ninit  -> Some (rd, Ninit)
+      | NConst, _ | _, NConst -> Some (rd, (NConst))
+      | Const c2, Const c1    -> Some (rd, (Const (f c1 c2)))
+    in
     let open Lang.Op in
     match op, args with
     | OChar  i,  []   -> Some (rd, (Const i))
@@ -172,6 +171,7 @@ let tr_program (prog : pseudo program) =
           | IMove(rd,r,n)     -> tr_move i rd r (tr_instruction n)
           | IOp(op,rl,r,n)    -> tr_op i op rl r (tr_instruction n)
           | ICond(c,lr,nt,nf) ->
+            let c, lr = compute_cond i c lr in
             push_node (ICond (c,lr,tr_instruction nt,tr_instruction nf))
         in
         let node = Hashtbl.find code bid in
@@ -184,6 +184,30 @@ let tr_program (prog : pseudo program) =
       match Env.find r c_in with
       | Ninit | NConst -> push_node (IMove (rd, r, dest))
       | Const c -> push_node (IOp (Lang.Op.OConst c, [], rd, dest))
+
+    and compute_cond id (cond : Lang.Op.condition) args =
+      let open Lang.Op in
+      let c_in, _ = Hashtbl.find in_out id in
+      let one_reg i r c f =
+        match Env.find r c_in with
+        | Const c -> if f i c then CConst 1, [] else CConst 0, [ ]
+        | _ -> c, [ r ]
+      in
+      let two_reg r1 r2 c f =
+        match Env.find r1 c_in, Env.find r2 c_in with
+        | Const c1, Const c2 -> if f c1 c2 then CConst 1, [] else CConst 0, []
+        | _ -> c, [r1; r2]
+      in
+      match cond, args with
+      | CConst c, [ ]    -> CConst c, [ ]
+      | CEqi i,   [ r1 ] -> one_reg i r1 cond (= )
+      | CNeqi i,  [ r1 ] -> one_reg i r1 cond (<>)
+      | CEq,    [r1; r2] -> two_reg r1 r2 cond (= )
+      | CNeq,   [r1; r2] -> two_reg r1 r2 cond (<>)
+      | CLt,    [r1; r2] -> two_reg r1 r2 cond (< )
+      | CGe,    [r1; r2] -> two_reg r1 r2 cond (>=)
+      | _ -> assert false
+
     and tr_op id op args rd dest =
       let open Lang.Op in
       let c_in, _ = Hashtbl.find in_out id in

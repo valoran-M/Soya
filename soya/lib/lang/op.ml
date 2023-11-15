@@ -27,7 +27,8 @@ type operation =
   | OAnd | OOr
 
 type condition =
-  | CEqi of int | CNeqi of int
+  | CConst of int
+  | CEqi   of int | CNeqi of int
   | CEq | CNeq
   | CLt | CGe
 

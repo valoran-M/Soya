@@ -11,6 +11,7 @@ let print_addr ppf print_reg addr =
 
 let print_cond print_reg ppf args =
   match args with
+  | CConst n, [  ] -> fprintf ppf "%d" n
   | CEqi  n,  [r1] -> fprintf ppf "%a == %n" print_reg r1 n
   | CNeqi n,  [r1] -> fprintf ppf "%a != %n" print_reg r1 n
   | CEq,  [r1; r2] -> fprintf ppf "%a == %a" print_reg r1 print_reg r2

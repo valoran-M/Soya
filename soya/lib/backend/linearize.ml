@@ -6,12 +6,13 @@ open Ltl
 let tr_function (fdef : Ltl.function_def) =
   let negate_condition (c: condition) =
     match c with
-    | CEqi n  -> CNeqi n
-    | CNeqi n -> CEqi n
-    | CEq     -> CNeq
-    | CNeq    -> CEq
-    | CLt     -> CGe
-    | CGe     -> CLt
+    | CEqi n    -> CNeqi n
+    | CNeqi n   -> CEqi n
+    | CEq       -> CNeq
+    | CNeq      -> CEq
+    | CLt       -> CGe
+    | CGe       -> CLt
+    | CConst _  -> assert false
   in
   let id_to_label   = Hashtbl.create 32 in
   let label_is_used = Hashtbl.create 8  in

@@ -115,6 +115,9 @@ let tr_function (fdef : Lang.Imp.function_def) =
     | Binop (Or, c1, c2) ->
       let cond_c2 = tr_condition c2 destT destF in
       tr_condition c1 destT cond_c2 
+    | Bool b ->
+      let c = if b then 1 else 0 in
+      push_node (ICond (CConst c, [ ], destT, destF))
     | _ ->
       let r = new_reg () in
       let id_node = push_node (ICond (CEqi 1, [r], destT, destF)) in
