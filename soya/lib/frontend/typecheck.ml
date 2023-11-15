@@ -97,6 +97,9 @@ let type_check (prog : location program) =
     match c.expr with
     | Binop (And, c1, c2)    ->
       down_cast_condition c2 loc (down_cast_condition c1 loc (envt, envf))
+    | Unop (Not, c) ->
+      let envf, envt = (down_cast_condition c loc (envf, envt)) in
+      (envt, envf)
     | Instanceof (c, (i, _)) ->
       (match c.expr with
       | Var v ->

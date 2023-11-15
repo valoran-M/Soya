@@ -149,6 +149,23 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     ) [i] d
   in
 
+  let rec tr_condition (c : typ expression) : typ expression =
+    match c.expr with
+    | Binop ((And | Or as op), e1, e2) ->
+      mk_expr c.annot (Binop (op, tr_condition e1, tr_condition e2))
+    | Unop (Not, c) -> tr_false_condition c
+    | _ -> c
+  and tr_false_condition (c : typ expression) : typ expression =
+    match c.expr with
+    | Binop (And, c1, c2) ->
+      mk_expr c.annot (Binop (Or,tr_false_condition c1,tr_false_condition c2))
+    | Binop (Or, c1, c2) ->
+      mk_expr c.annot (Binop (And,tr_false_condition c1,tr_false_condition c2))
+    | Unop (Not, c) ->
+      tr_condition c
+    | _ -> mk_expr TBool (Unop (Not, c))
+  in
+
   let rec tr_instruction (i : typ instruction) : Imp.sequence =
     match i with
     | Putchar c ->
@@ -158,10 +175,10 @@ let tr_program (prog : typ program) : Lang.Imp.program =
       let e, d = tr_expression e in
       instr_to_seq d (Set (s, e))
     | If (c, e1, e2) ->
-      let c, d = tr_expression c in
+      let c, d = tr_expression (tr_condition c) in
       instr_to_seq d (If (c, tr_seq e1, tr_seq e2))
     | While (c, e)   ->
-      let c, d = tr_expression c in
+      let c, d = tr_expression (tr_condition c) in
       instr_to_seq d (While (c, tr_seq e))
     | Return e       ->
       let e, d = tr_expression e in

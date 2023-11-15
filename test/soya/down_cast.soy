@@ -45,10 +45,17 @@ function void main() {
   int x = 0;
   point4 p1 = new point4(1, 1, 1, 2);
   point p2 = new point4(1, 2, 3, 1);
- if (p2 instanceof point4) {
+  if (p2 instanceof point4) {
     x = p1.scalar_prod(p2);
     putchar('0' + x);
   } else {
     putchar('x');
+  }
+
+  if (! (p2 instanceof point4)) {
+    putchar('x');
+  } else {
+    x = p1.scalar_prod(p2);
+    putchar('0' + x);
   }
 }
