@@ -79,6 +79,9 @@ let tr_program (prog : typ program) : Lang.Imp.program =
     | Cst c               -> Cst c,  []
     | Bool b              -> Bool b, []
     | Var v               -> Var v,  []
+    | Unop (op, e)  ->
+      let e, d = tr_expression e in
+      Unop (op, e), d
     | Binop (op, e1, e2)  ->
       let e1, d1 = tr_expression e1 in
       let e2, d2 = tr_expression e2 in

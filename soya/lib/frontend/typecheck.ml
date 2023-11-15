@@ -116,6 +116,14 @@ let type_check (prog : location program) =
     | Cst c           -> mk_expr TInt  (Cst c)
     | Bool b          -> mk_expr TBool (Bool b)
     | Var v           -> mk_expr (get_var_type v expr.annot env) (Var v)
+    | Unop  (Neg, e) ->
+      let et = type_expr e env in
+      check_type e.annot et.annot TInt;
+      mk_expr TInt (Unop (Neg, et))
+    | Unop  (Not, e) ->
+      let et = type_expr e env in
+      check_type e.annot et.annot TBool;
+      mk_expr TBool (Unop (Not, et))
     | Binop ((Add | Mul | Sub as op), e1, e2) ->
       let e1t = type_expr e1 env in
       let e2t = type_expr e2 env in

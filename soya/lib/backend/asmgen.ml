@@ -19,6 +19,8 @@ let tr_function (fdef : Linear.function_def) =
     | OAddImm n, [r1]     -> if r = r1 && n = 0 then nop else addi r r1 n
     | OSubImm n, [r1]     -> if r = r1 && n = 0 then nop else subi r r1 n
     | OMulImm n, [r1]     -> if r = r1 && n = 1 then nop else muli r r1 n
+    | ONot,      [r1]     -> not_ r r1
+    | ONeg,      [r1]     -> neg r r1
     | OAdd,      [r1; r2] -> add r r1 r2
     | OSub,      [r1; r2] -> sub r r1 r2
     | OMul,      [r1; r2] -> mul r r1 r2

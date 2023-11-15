@@ -45,6 +45,7 @@ let tr_function (fdef : Lang.Imp.function_def) =
       (match Hashtbl.find_opt env v with
       | Some rv -> if reg <> rv then push_node (IMove (reg, rv, dest)) else dest
       | None    -> push_node (ILoad (AddrGlobl v, reg, Word, dest)))
+    | Unop (op, e), _       -> tr_unop  op e reg dest
     | Binop (op, e1, e2), _ -> tr_binop op e1 e2 reg dest
     | DCall (e, le), _ ->
       let id_call = new_node () in
@@ -82,6 +83,19 @@ let tr_function (fdef : Lang.Imp.function_def) =
         (push_node (ILoad ((AddrOReg (c, r)), reg, s, dest)))
     | _ ->
       tr_expression e (Some r) (push_node (ILoad ((AddrReg r), reg, s, dest)))
+
+  and tr_unop (op : unop) e reg dest =
+    match reg with
+    | None -> tr_expression e None dest
+    | Some reg ->
+      let op =
+        match op with
+        | Neg -> Lang.Op.ONeg
+        | Not -> Lang.Op.ONot
+      in
+      let r = new_reg () in
+      let id_op = push_node (IOp (op, [r], reg, dest)) in
+      tr_expression e (Some r) id_op
 
   and tr_binop (op : binop) e1 e2 reg dest =
     match reg with

@@ -4,11 +4,14 @@ type binop =
   | Eq  | Neq
   | And | Or
 
+type unop = Neg | Not
+
 type expression =
   | Char  of int 
   | Cst   of int
   | Bool  of bool
   | Var   of string
+  | Unop  of unop   * expression
   | Binop of binop  * expression * expression
   | Call  of string * expression list
   | DCall of expression * expression list

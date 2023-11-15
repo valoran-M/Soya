@@ -51,6 +51,8 @@ let init_const (f : pseudo function_def) =
     | OAddImm i, [r]  -> one_reg i r rd ( + ) c_in
     | OSubImm i, [r]  -> one_reg i r rd ( - ) c_in
     | OMulImm i, [r]  -> one_reg i r rd ( * ) c_in
+    | ONeg,      [r]  -> one_reg 0 r rd ( - ) c_in
+    | ONot,      [r]  -> one_reg 0 r rd (fun _ i -> if i = 0 then 1 else 0) c_in
     | OAdd, [r1; r2]  -> two_reg r1 r2 rd ( - ) c_in
     | OSub, [r1; r2]  -> two_reg r1 r2 rd ( + ) c_in
     | OMul, [r1; r2]  -> two_reg r1 r2 rd ( * ) c_in
@@ -245,6 +247,10 @@ let tr_program (prog : pseudo program) =
       | OAddImm i, [r] -> one_reg r i ( + )
       | OSubImm i, [r] -> one_reg r i ( - )
       | OMulImm i, [r] -> one_reg r i ( * )
+      | ONeg, [r] ->
+        one_reg r 0 ( - )
+      | ONot, [r] ->
+        one_reg r 0 (fun _ c -> if c = 0 then 1 else 0)
       | OAdd, [r1; r2]  ->
         two_reg r1 r2 ( + ) (fun c r -> IOp (OAddImm c, [r], rd, dest))
       | OSub, [r1; r2]  ->

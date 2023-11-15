@@ -21,7 +21,7 @@
 %}
 
 %token SUB PLUS STAR
-%token LT LE GT GE EQ NEQ AND OR
+%token LT LE GT GE EQ NEQ AND OR NOT
 
 %token <char> CHAR
 %token <int> CST
@@ -37,6 +37,8 @@
 
 %left     OR
 %left     AND
+%nonassoc NOT
+
 %left     EQ NEQ
 %left     LT LE GT GE
 %left     INSTANCEOF
@@ -174,6 +176,7 @@ expression:
 | SUPER                                 { mk_expr $sloc (Super) }
 | m=mem_access                          { mk_expr $sloc (Read m) }
 | e1=expression op=binop e2=expression  { mk_expr $sloc (Binop(op, e1, e2)) }
+| op=unop e=expression                  { mk_expr $sloc (Unop(op, e)) }
 | e=expression INSTANCEOF id=IDENT
   { mk_expr $sloc (Instanceof (e, (id, mk_loc $loc(id)))) }
 | f=IDENT LPAR params=separated_list(COMMA, expression) RPAR
@@ -202,3 +205,7 @@ expression:
 | NEQ   { Lang.Imp.Neq }
 ;
 
+%inline unop:
+| NOT { Lang.Imp.Not }
+| SUB { Lang.Imp.Neg }
+;

@@ -14,6 +14,8 @@ type typ =
 
 type binop = Imp.binop
 
+type unnop = Imp.unop
+
 type 'a expression = {
   annot: 'a;
   expr: 'a expr;
@@ -24,6 +26,7 @@ and 'a expr =
   | Bool  of bool
   | Var   of string
   | Binop of binop * 'a expression * 'a expression
+  | Unop  of unnop * 'a expression
   | Call  of string * 'a expression list
   | MCall of 'a expression * string * 'a expression list
   | New   of string * 'a expression list

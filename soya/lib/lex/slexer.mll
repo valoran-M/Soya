@@ -51,6 +51,7 @@ rule token = parse
   | "'" _ as c "'"        { CHAR (c.[1]) }
   | ";"   { SEMI }
   | "="   { SET }
+  | "!"   { NOT }
   | "&&"  { AND }
   | "||"  { OR  }
   | "+"   { PLUS }

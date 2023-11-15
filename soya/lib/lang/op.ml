@@ -21,6 +21,8 @@ type operation =
   | OAddImm of int
   | OSubImm of int
   | OMulImm of int
+  | ONeg
+  | ONot
   | OAdd | OSub
   | OMul
   | OLt  | OLe
