@@ -2,7 +2,7 @@
 
 A compiler from Soya to Mips
 
-The docuemention of Soya language is [here](./doc/soya.md)
+The documentation of Soya language is [here](./doc/soya.md)
 
 ## Args
 
