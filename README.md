@@ -2,7 +2,7 @@
 
 A compiler from Soya to Mips
 
-The docuemention of Soya language is [here](./doc/soya.md)
+The documentation of Soya language is [here](./doc/soya.md)
 
 ## Args
 
@@ -57,4 +57,5 @@ The docuemention of Soya language is [here](./doc/soya.md)
 
 1. [Gurvan](https://gitlab.com/Gurvan.dev) for its help in allocating registers
    part
+2. [Paul](https://github.com/paulpatault) for its help in spelling
 
